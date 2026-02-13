@@ -1,27 +1,19 @@
 # 2026年2月14日 财经简报
 
-**今日核心主题：AI技术革命与地缘政治博弈交织，全球市场迎来新变局**
+今日全球市场聚焦AI技术变革与地缘政治风险，科技巨头股价波动引发市场关注，同时多国政策调整将影响未来投资格局。
 
 ## 🔥 今日热点
 
-1. [Nvidia股价下跌，AMD上涨，Arista成"罪魁祸首"](https://www.cnbc.com/2026/02/13/nvidias-stock-is-down-and-amd-is-up-the-culprit-may-be-arista-.html) **看点**：网络设备商Arista业绩预警引发芯片股震荡，显示AI产业链传导效应。
+1. **[Nvidia股价下跌，AMD上涨，Arista或成"罪魁祸首"](https://www.cnbc.com/2026/02/13/nvidias-stock-is-down-and-amd-is-up-the-culprit-may-be-arista-.html)**  
+   **看点**: 网络设备商Arista业绩预警引发芯片股连锁反应，科技巨头竞争格局生变。
 
-2. [特朗普称将发布行政令要求中期选举前实施选民身份证](https://www.cnbc.com/2026/02/13/trump-congress-voter-id-midterms.html) **看点**：政治极化加剧，可能影响美国中期选举结果及政策走向。
+2. **[中国科技巨头掀起"春节AI大战"，送钱送车抢占用户](https://www.cnbc.com/2026/02/13/china-ai-lunar-new-year-bytedance-baidu-tencent-alibaba.html)**  
+   **看点**: 百度、字节跳动等巨头豪掷补贴争夺AI用户，中国AI商业化进程加速。
 
-3. [中国科技巨头掀起"春节AI大战"，送钱送车争夺用户](https://www.cnbc.com/2026/02/13/china-ai-lunar-new-year-bytedance-baidu-tencent-alibaba.html) **看点**：AI应用竞争白热化，中国科技巨头豪掷补贴抢占市场。
+3. **[特朗普宣布将发布行政令要求中期选举前实施选民身份证](https://www.cnbc.com/2026/02/13/trump-congress-voter-id-midterms.html)**  
+   **看点**: 政治极化加剧，选举政策变动可能影响美国中期选举结果及市场走向。
 
-4. [AI可能引发信用市场"系统性冲击"，UBS分析师警告](https://www.cnbc.com/2026/02/13/ai-credit-markets.html) **看点**：金融科技颠覆传统信贷模式，系统性风险隐忧浮现。
+4. **[AI冲击可能引发信贷市场"系统性冲击"，瑞银分析师警告](https://www.cnbc.com/2026/02/13/ai-credit-markets.html)**  
+   **看点**: 人工智能技术颠覆传统信贷评估模型，金融体系面临结构性风险。
 
-5. [Anthropic因"反OpenAI"超级碗广告获11%用户增长](https://www.cnbc.com/2026/02/13/anthropic-open-ai-super-bowl-ads.html) **看点**：营销策略成效显著，AI行业竞争进入新阶段。
-
-## 📈 市场动态
-
-1. [A股春节后走势分析](http://xueqiu.com/7368170779/376148009) **上证指数+0.8%，深证成指+1.2%，创业板指+1.5%**。新能源板块领涨，锂电池行业本周更新显示需求回暖。点评：A股春节后表现强劲，新能源赛道受政策支持持续走强，投资者可关注高成长性科技股，但需警惕估值过高风险。
-
-2. [美股科技股震荡，Nvidia下跌AMD上涨](https://www.cnbc.com/2026/02/13/nvidias-stock-is-down-and-amd-is-up-the-culprit-may-be-arista-.html) **纳斯达克指数-0.3%，道琼斯工业平均+0.2%**。芯片股分化，Arista业绩预警引发连锁反应。点评：AI产业链波动加剧，投资者应关注行业龙头业绩指引，分散配置降低单一股票风险。
-
-3. [黄金价格创历史新高，原油价格震荡上行](https://www.cnbc.com/2026/02/13/venezuela-oil-sales-qatar-chris-wright-trump.html) **COMEX黄金+1.5%，布伦特原油+0.8%**。地缘政治紧张及通胀预期推升避险资产。点评：黄金作为传统避险资产吸引力增强，普通投资者可通过黄金ETF参与，但需注意波动风险；原油价格受供需平衡影响，长期仍存上涨空间。
-
-## 💰 宏观与政策
-
-1. [美国与台湾签署贸易协议](https://www.ft
+5. **[美国与台湾签署贸易协议](https://www.ftch
