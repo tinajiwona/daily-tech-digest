@@ -35,7 +35,15 @@ def fetch_rss_feeds(config: dict) -> list[dict]:
 
     def fetch_single_feed(name, feed_info):
         try:
-            feed = feedparser.parse(feed_info["url"])
+            response = requests.get(
+                feed_info["url"],
+                headers={
+                    "User-Agent": "Mozilla/5.0 (compatible; DailyFinanceDigest/1.0; +https://github.com/tinajiwona/daily-tech-digest)"
+                },
+                timeout=20,
+            )
+            response.raise_for_status()
+            feed = feedparser.parse(response.content)
             items = []
             for entry in feed.entries[:15]:  # 每个源最多15条
                 items.append({
@@ -63,6 +71,25 @@ def fetch_rss_feeds(config: dict) -> list[dict]:
             result.extend(items)
 
     return result
+
+
+def build_fallback_content(config: dict) -> str:
+    """RSS 源暂不可用时仍生成一份可推送的简报。"""
+    sources = []
+    for feed_info in config["rss_feeds"].values():
+        sources.append(
+            f"- [{feed_info['name']}]({feed_info['url']}) [{feed_info['category']}]"
+        )
+
+    return "\n".join(
+        [
+            "## 数据源状态",
+            "今日 GitHub Actions 运行时未能稳定抓取 RSS 条目。请生成一份简短的财经监控简报，明确说明数据源暂不可用，并提醒读者以正式市场数据为准。",
+            "",
+            "## 已配置数据源",
+            *sources,
+        ]
+    )
 
 
 def prepare_content_for_ai(rss: list) -> str:
@@ -239,33 +266,41 @@ def generate_digest_with_openai(content: str, config: dict, today: str) -> str:
     model = os.environ.get("OPENAI_MODEL") or openai_config.get("model", "gpt-4.1-mini")
     max_tokens = int(openai_config.get("max_output_tokens", config["claude"]["max_tokens"]))
     temperature = float(openai_config.get("temperature", config["claude"].get("temperature", 0.3)))
+    timeout_seconds = int(openai_config.get("timeout_seconds", 300))
     prompt = build_digest_prompt(content, today)
 
-    response = requests.post(
-        "https://api.openai.com/v1/responses",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "model": model,
-            "max_output_tokens": max_tokens,
-            "temperature": temperature,
-            "input": [
-                {
-                    "role": "developer",
-                    "content": "你是资深财经编辑。请严格按用户要求输出中文 Markdown 财经简报。",
-                },
-                {
-                    "role": "user",
-                    "content": prompt,
-                },
-            ],
-        },
-        timeout=120,
-    )
+    print(f"[信息] 调用 OpenAI: model={model}, max_output_tokens={max_tokens}, timeout={timeout_seconds}s")
+    try:
+        response = requests.post(
+            "https://api.openai.com/v1/responses",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": model,
+                "max_output_tokens": max_tokens,
+                "temperature": temperature,
+                "input": [
+                    {
+                        "role": "developer",
+                        "content": "你是资深财经编辑。请严格按用户要求输出中文 Markdown 财经简报。",
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    },
+                ],
+            },
+            timeout=timeout_seconds,
+        )
+    except requests.exceptions.Timeout as exc:
+        raise RuntimeError(f"OpenAI API 请求超时（{timeout_seconds}s），可以调低 OPENAI_MODEL 或 max_output_tokens 后重试。") from exc
 
-    payload = response.json()
+    try:
+        payload = response.json()
+    except ValueError as exc:
+        raise RuntimeError(f"OpenAI API 返回了非 JSON 响应，HTTP {response.status_code}") from exc
     if not response.ok:
         message = payload.get("error", {}).get("message", "OpenAI API 请求失败")
         raise RuntimeError(message)
@@ -326,11 +361,11 @@ def main():
 
     # 检查是否有内容
     if not rss:
-        print("\n[错误] 未获取到任何内容，退出")
-        sys.exit(1)
+        print("\n[警告] 未获取到任何 RSS 内容，将使用兜底内容生成简报，确保微信推送链路可验证。")
+        raw_content = build_fallback_content(config)
+    else:
+        raw_content = prepare_content_for_ai(rss)
 
-    # 准备内容
-    raw_content = prepare_content_for_ai(rss)
 
     # 生成简报
     print("[2/3] 正在使用 AI 生成财经简报...")
