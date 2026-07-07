@@ -38,6 +38,11 @@
     "temperature": 0.3,
     "timeout_seconds": 300
   },
+  "sector_fund_flow": {
+    "enabled": true,
+    "indicator": "今日",
+    "limit": 15
+  },
   "output": {
     "digests_dir": "digests",
     "date_format": "%Y-%m-%d",

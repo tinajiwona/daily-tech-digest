@@ -73,6 +73,120 @@ def fetch_rss_feeds(config: dict) -> list[dict]:
     return result
 
 
+def format_money(value) -> str:
+    """格式化金额，尽量兼容 akshare 返回的字符串或数字。"""
+    if value in (None, ""):
+        return "未知"
+
+    if isinstance(value, str):
+        return value
+
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+
+    if abs(number) >= 100000000:
+        return f"{number / 100000000:.2f}亿"
+    if abs(number) >= 10000:
+        return f"{number / 10000:.2f}万"
+    return f"{number:.2f}"
+
+
+def first_existing(row, names: list[str], default=""):
+    """从 pandas row 中读取第一个存在的字段。"""
+    for name in names:
+        if name in row:
+            value = row[name]
+            if value is not None and str(value) != "nan":
+                return value
+    return default
+
+
+def normalize_sector_rows(df, source: str, limit: int) -> list[dict]:
+    """规范化 akshare 板块资金流 DataFrame。"""
+    rows = []
+    if df is None or df.empty:
+        return rows
+
+    for _, row in df.head(limit).iterrows():
+        name = first_existing(row, ["名称", "板块名称", "行业", "概念"], "未知板块")
+        change = first_existing(row, ["今日涨跌幅", "涨跌幅", "最新涨跌幅"], "未知")
+        main_net = first_existing(
+            row,
+            ["今日主力净流入-净额", "主力净流入-净额", "主力净流入", "净额", "资金净流入"],
+            "",
+        )
+        super_net = first_existing(
+            row,
+            ["今日超大单净流入-净额", "超大单净流入-净额", "超大单净流入"],
+            "",
+        )
+
+        rows.append(
+            {
+                "source": source,
+                "name": str(name),
+                "change": str(change),
+                "main_net": format_money(main_net),
+                "super_net": format_money(super_net),
+            }
+        )
+
+    return rows
+
+
+def fetch_sector_fund_flow(config: dict) -> dict:
+    """抓取 A 股行业/概念板块资金流向。"""
+    sector_config = config.get("sector_fund_flow", {})
+    if not sector_config.get("enabled", True):
+        return {"industry": [], "concept": []}
+
+    try:
+        import akshare as ak
+    except Exception as exc:
+        print(f"[警告] akshare 不可用，跳过板块资金流抓取: {exc}")
+        return {"industry": [], "concept": []}
+
+    indicator = sector_config.get("indicator", "今日")
+    limit = int(sector_config.get("limit", 12))
+    result = {"industry": [], "concept": []}
+
+    targets = [
+        ("industry", "行业资金流", "行业板块"),
+        ("concept", "概念资金流", "概念板块"),
+    ]
+
+    for key, sector_type, label in targets:
+        try:
+            df = ak.stock_sector_fund_flow_rank(indicator=indicator, sector_type=sector_type)
+            result[key] = normalize_sector_rows(df, label, limit)
+            print(f"[完成] 获取 {label} 资金流 {len(result[key])} 条")
+        except Exception as exc:
+            print(f"[警告] {label}资金流抓取失败: {exc}")
+
+    return result
+
+
+def render_sector_fund_flow(sector_data: dict) -> str:
+    """把板块资金流数据渲染给 AI。"""
+    sections = []
+    for key, title in [("industry", "行业板块资金流"), ("concept", "概念板块资金流")]:
+        rows = sector_data.get(key, [])
+        if not rows:
+            sections.append(f"## {title}\n- 暂无可用数据")
+            continue
+
+        lines = []
+        for index, item in enumerate(rows, start=1):
+            lines.append(
+                f"{index}. {item['name']} | 涨跌幅: {item['change']} | 主力净流入: {item['main_net']} | 超大单净流入: {item['super_net']}"
+            )
+        sections.append(f"## {title}\n" + "\n".join(lines))
+
+    return "\n\n".join(sections)
+
+
 def build_fallback_content(config: dict) -> str:
     """RSS 源暂不可用时仍生成一份可发布到网站的简报。"""
     sources = []
@@ -92,9 +206,12 @@ def build_fallback_content(config: dict) -> str:
     )
 
 
-def prepare_content_for_ai(rss: list) -> str:
+def prepare_content_for_ai(rss: list, sector_data: dict = None) -> str:
     """准备发送给 AI 的内容"""
     sections = []
+
+    if sector_data:
+        sections.append(render_sector_fund_flow(sector_data))
 
     # RSS 部分 - 按分类分组
     if rss:
@@ -156,6 +273,12 @@ def build_digest_prompt(content: str, today: str) -> str:
 - 点评要说明对普通投资者的意义
 - 每条至少150字
 
+**🧭 今日板块资金流向（必须重点写）**
+- 基于“行业板块资金流”和“概念板块资金流”数据输出
+- 分为 **资金净流入靠前** 和 **资金净流出靠前** 两组
+- 每组至少列出5个板块，必须包含: 板块名称 + 主力净流入/净流出 + 涨跌幅 + 一句话解读
+- 如果出现 AI、算力、CPO、PCB、半导体、机器人、新能源、银行、证券、白酒、黄金、军工、医药、有色金属等板块，优先解释
+
 **💰 宏观与政策（3条）**
 - 央行政策、财政政策、金融监管
 - **每条必须包含**: [标题](链接) + **政策内容 + 背景 + 影响分析**
@@ -167,6 +290,16 @@ def build_digest_prompt(content: str, today: str) -> str:
 - **每条必须包含**: [标题](链接) + **行业动态 + 数据支撑 + 影响分析**
 - 说明对投资者和消费者的意义
 - 每条至少150字
+
+**🔎 板块利好利空归因（必须重点写）**
+- 选择6-8个最值得关注的行业/概念板块
+- 每个板块必须按以下格式写:
+  - **板块**:
+  - **资金表现**: 主力净流入/净流出、涨跌幅
+  - **利好消息**: 从新闻、政策、产业趋势中提炼1-2条
+  - **利空/风险**: 从资金流出、估值、业绩、监管、外部事件中提炼1-2条
+  - **短线观察**: 明天或接下来1-3个交易日需要观察的信号
+- 不要只写泛泛的“市场情绪”，必须把消息和板块资金表现关联起来
 
 **🌍 国际视野（2-3条）**
 - 美联储、欧央行政策
@@ -182,6 +315,11 @@ def build_digest_prompt(content: str, today: str) -> str:
 - **每条必须包含**: [标题](链接) + **观点内容 + 出处 + 投资建议**
 - 说明为什么值得参考
 - 每条至少150字
+
+**⚡ 明日板块观察清单（5条）**
+- 输出5个明天最值得盯盘的板块
+- 每条包含: 触发因素 + 观察指标 + 偏利好/偏利空/中性
+- 只做信息跟踪，不给买卖建议
 
 **🎯 选题灵感（3-5条）**
 为财经博主推荐选题方向:
@@ -211,7 +349,7 @@ def build_digest_prompt(content: str, today: str) -> str:
 - 使用Markdown格式
 - 导语100字以内，概括当日核心主题
 - **所有内容板块（除选题灵感外）必须附上原始链接**
-- 总长度控制在3000-4000字
+- 总长度控制在3500-5000字
 - 使用加粗、列表等方式提升可读性
 
 直接输出简报内容，不需要额外说明。"""
@@ -355,24 +493,29 @@ def main():
     print(f"\n日期: {today}")
 
     # 抓取数据
-    print("\n[1/3] 正在抓取财经媒体 RSS 源...")
+    print("\n[1/4] 正在抓取财经媒体 RSS 源...")
     rss = fetch_rss_feeds(config)
     print(f"      获取 {len(rss)} 条")
 
+    print("\n[2/4] 正在抓取 A 股板块资金流...")
+    sector_data = fetch_sector_fund_flow(config)
+    sector_count = len(sector_data.get("industry", [])) + len(sector_data.get("concept", []))
+    print(f"      获取 {sector_count} 条板块资金流")
+
     # 检查是否有内容
-    if not rss:
-        print("\n[警告] 未获取到任何 RSS 内容，将使用兜底内容生成简报，确保网站更新链路可验证。")
+    if not rss and not sector_count:
+        print("\n[警告] 未获取到任何 RSS 和板块资金流内容，将使用兜底内容生成简报，确保网站更新链路可验证。")
         raw_content = build_fallback_content(config)
     else:
-        raw_content = prepare_content_for_ai(rss)
+        raw_content = prepare_content_for_ai(rss, sector_data)
 
 
     # 生成简报
-    print("[2/3] 正在使用 AI 生成财经简报...")
+    print("[3/4] 正在使用 AI 生成财经简报...")
     digest = generate_digest(raw_content, config, today)
 
     # 保存
-    print("[3/3] 正在保存简报...")
+    print("[4/4] 正在保存简报...")
     save_digest(digest, config, today)
 
     print("\n" + "=" * 50)
