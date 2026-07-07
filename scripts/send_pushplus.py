@@ -168,7 +168,7 @@ def build_push_content(markdown_text: str) -> str:
   </div>
 
   <p style="text-align:center;color:#9ca3af;font-size:12px;line-height:1.6;margin:18px 0 0;">
-    由 Claude/GLM + GitHub Actions 自动生成<br>
+    由 OpenAI + GitHub Actions 自动生成<br>
     生成时间: {generated_at}<br>
     本简报仅供参考，不构成投资建议。
   </p>
@@ -176,30 +176,66 @@ def build_push_content(markdown_text: str) -> str:
 """
 
 
-def send_pushplus_notification(token: str, title: str, content: str) -> bool:
+def post_pushplus(payload: dict) -> tuple[bool, str]:
     import requests
 
-    url = f"http://www.pushplus.plus/send/{token}"
-    payload = {
+    errors = []
+    for url in ["https://www.pushplus.plus/send", "http://www.pushplus.plus/send"]:
+        try:
+            response = requests.post(url, json=payload, timeout=20)
+            response.raise_for_status()
+            result = response.json()
+            code = result.get("code")
+            msg = result.get("msg") or result.get("message") or "无返回消息"
+
+            if code == 200:
+                return True, f"PushPlus 已接收：{msg}"
+
+            errors.append(f"{url} 返回 code={code}, msg={msg}")
+        except Exception as exc:
+            errors.append(f"{url} 请求失败：{exc}")
+
+    return False, "；".join(errors)
+
+
+def send_pushplus_notification(token: str, title: str, content: str) -> bool:
+    token = token.strip()
+    html_payload = {
+        "token": token,
         "title": title,
         "content": build_push_content(content),
         "template": "html",
+        "channel": "wechat",
     }
+    success, message = post_pushplus(html_payload)
+    if success:
+        print(f"[成功] {message}")
+        return True
 
-    try:
-        response = requests.post(url, json=payload, timeout=15)
-        response.raise_for_status()
-        result = response.json()
+    print(f"[警告] HTML 简报推送失败，尝试发送短文本测试消息：{message}")
 
-        if result.get("code") == 200:
-            print("[成功] 微信推送已发送")
-            return True
+    links = get_repo_links()
+    fallback_payload = {
+        "token": token,
+        "title": f"{title} - 测试通知",
+        "content": "\n".join(
+            [
+                "每日财经简报已生成，但完整 HTML 推送失败。",
+                "这是一条 PushPlus 短文本兜底测试通知。",
+                f"查看最新简报：{links['latest']}",
+                f"查看运行记录：{links['run']}",
+            ]
+        ),
+        "template": "txt",
+        "channel": "wechat",
+    }
+    fallback_success, fallback_message = post_pushplus(fallback_payload)
+    if fallback_success:
+        print(f"[成功] 短文本兜底通知已发送：{fallback_message}")
+        return True
 
-        print(f"[失败] {result.get('msg', '未知错误')}")
-        return False
-    except Exception as exc:
-        print(f"[错误] 推送失败: {exc}")
-        return False
+    print(f"[失败] PushPlus 推送失败：{fallback_message}")
+    return False
 
 
 def main():
