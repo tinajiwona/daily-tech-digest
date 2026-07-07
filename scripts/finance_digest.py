@@ -74,7 +74,7 @@ def fetch_rss_feeds(config: dict) -> list[dict]:
 
 
 def build_fallback_content(config: dict) -> str:
-    """RSS 源暂不可用时仍生成一份可推送的简报。"""
+    """RSS 源暂不可用时仍生成一份可发布到网站的简报。"""
     sources = []
     for feed_info in config["rss_feeds"].values():
         sources.append(
@@ -361,7 +361,7 @@ def main():
 
     # 检查是否有内容
     if not rss:
-        print("\n[警告] 未获取到任何 RSS 内容，将使用兜底内容生成简报，确保微信推送链路可验证。")
+        print("\n[警告] 未获取到任何 RSS 内容，将使用兜底内容生成简报，确保网站更新链路可验证。")
         raw_content = build_fallback_content(config)
     else:
         raw_content = prepare_content_for_ai(rss)

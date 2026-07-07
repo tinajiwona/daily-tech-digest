@@ -2,7 +2,7 @@
 
 ## 📖 项目简介
 
-这是一个基于 OpenAI、GitHub Actions 和 PushPlus 的自动化财经简报生成系统。它会每天定时抓取全球顶级财经媒体的热点内容，通过 AI 分析整理成结构化简报，并自动发布到 GitHub Pages 和微信推送。
+这是一个基于 OpenAI 和 GitHub Actions 的自动化财经简报生成系统。它会每天定时抓取全球顶级财经媒体的热点内容，通过 AI 分析整理成结构化简报，并自动发布到 GitHub Pages。
 
 ### ✨ 核心特性
 
@@ -11,7 +11,7 @@
 - 🤖 **AI 智能分析** - 优先使用 OpenAI API 自动筛选热点、提炼趋势
 - 💰 **零成本运行** - GitHub Actions 个人使用完全免费
 - 📱 **自动发布** - 生成 Markdown 和 HTML，支持 GitHub Pages 托管
-- 💬 **微信推送** - 集成 PushPlus 自动推送到微信
+- 🌐 **网站输出** - 首页、最新简报和历史归档自动更新
 
 ---
 
@@ -45,8 +45,6 @@
    Name: OPENAI_API_KEY
    Value: 你的 OpenAI API Key
 
-   Name: PUSHPLUS_TOKEN (可选)
-   Value: 你的 PushPlus Token
    ```
 
    可选：如果想调整 OpenAI 模型，可以在 `Settings` > `Secrets and variables` > `Actions` > `Variables` 里添加：
@@ -102,17 +100,6 @@ workflow_dispatch: true
 
 ---
 
-## 📱 微信推送配置（可选）
-
-### 获取 PushPlus Token
-
-1. 访问 [PushPlus官网](https://www.pushplus.plus/)
-2. 微信扫码登录
-3. 复制你的 Token
-4. 添加到 GitHub Secrets: `PUSHPLUS_TOKEN`
-
----
-
 ## 🌐 配置 GitHub Pages（可选）
 
 如果想在线查看生成的简报：
@@ -164,5 +151,5 @@ https://你的用户名.github.io/仓库名/digests/
 ---
 
 **创建时间**: 2026-01-18
-**维护者**: Henry
+**维护者**: Tina
 **许可证**: MIT

@@ -536,7 +536,7 @@ def generate_page(files: list[dict], output_path: Path):
                 <div class="meta-row">
                     <span class="pill">日期 {latest_date}</span>
                     <span class="pill">约 {latest_words} 字</span>
-                    <span class="pill">微信同步推送</span>
+                    <span class="pill">网站自动更新</span>
                 </div>
             </div>
             <aside class="metric-panel">
