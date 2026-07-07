@@ -32,6 +32,11 @@
     "temperature": 0.3,
     "base_url": "https://open.bigmodel.cn/api/anthropic"
   },
+  "openai": {
+    "model": "gpt-4.1-mini",
+    "max_output_tokens": 8192,
+    "temperature": 0.3
+  },
   "output": {
     "digests_dir": "digests",
     "date_format": "%Y-%m-%d",

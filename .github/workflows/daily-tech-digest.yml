@@ -34,14 +34,15 @@ jobs:
 
     - name: 运行财经简报生成脚本
       env:
-        ANTHROPIC_AUTH_TOKEN: ${{ secrets.ANTHROPIC_AUTH_TOKEN }}
-        ANTHROPIC_BASE_URL: https://open.bigmodel.cn/api/anthropic
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4.1-mini' }}
       run: |
         python scripts/finance_digest.py
 
-    - name: 生成 HTML 索引
+    - name: 生成网页
       run: |
         python scripts/generate_html.py
+        python scripts/generate_page.py
 
     - name: 提交变更
       run: |

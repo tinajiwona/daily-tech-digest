@@ -40,7 +40,7 @@ cd ~/.claude/skills/daily-tech-digest
 pip install -r requirements.txt
 
 # 设置 API Key
-export ANTHROPIC_API_KEY="your-api-key"
+export OPENAI_API_KEY="your-openai-api-key"
 
 # 运行财经简报生成
 python scripts/finance_digest.py
@@ -75,11 +75,11 @@ python scripts/generate_html.py
 编辑 `scripts/config.json` 可自定义：
 - RSS 源列表
 - 抓取数量限制
-- Claude 模型和参数
+- OpenAI 模型和参数
 - 输出目录和日期格式
 
 ## 自动化
 
 GitHub Actions 配置为每天北京时间 06:30 自动运行，需要在 GitHub Secrets 中配置：
-- `ANTHROPIC_API_KEY` - Claude API 密钥 (智谱 AI)
+- `OPENAI_API_KEY` - OpenAI API 密钥
 - `PUSHPLUS_TOKEN` - 微信推送令牌 (可选)

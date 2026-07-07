@@ -3,501 +3,569 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日科技简报 | Daily Tech Digest</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>每日财经简报 | Daily Finance Digest</title>
     <style>
-        *, *::before, *::after {
-                       box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         :root {
-            --bg-primary: #0a0a0b;
-            --bg-secondary: #111113;
-            --bg-tertiary: #18181b;
-            --bg-hover: #1f1f23;
-            --border: #27272a;
-            --border-subtle: #1e1e21;
-            --text-primary: #fafafa;
-            --text-secondary: #a1a1aa;
-            --text-tertiary: #71717a;
-            --accent: #10b981;
-            --accent-dim: rgba(16, 185, 129, 0.15);
-            --accent-hover: #059669;
+            --bg: #f7f4ed;
+            --surface: #fffdf8;
+            --surface-alt: #f0eee6;
+            --ink: #201f1b;
+            --muted: #6e6a60;
+            --line: #ddd5c7;
+            --accent: #0f766e;
+            --accent-strong: #134e4a;
+            --warn: #b45309;
+            --shadow: 0 18px 46px rgba(39, 35, 26, 0.1);
         }
 
-        html {
-            font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-size: 14px;
-            line-height: 1.6;
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            min-height: 100vh;
-        }
-
-        ::selection {
-            background: var(--accent-dim);
-            color: var(--text-primary);
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", Arial, sans-serif;
+            line-height: 1.7;
         }
 
         a {
             color: var(--accent);
             text-decoration: none;
-            transition: color 0.15s;
         }
 
-        a:hover {
-            color: var(--accent-hover);
-        }
-
-        .container {
-            max-width: 1000px;
+        .shell {
+            max-width: 1180px;
             margin: 0 auto;
-            padding: 0 24px;
+            padding: 28px 20px 56px;
         }
 
-        /* Header */
-        header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(10, 10, 11, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border-subtle);
-        }
-
-        .header-inner {
+        .topbar {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            height: 64px;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 28px;
         }
 
-        .logo {
+        .brand {
             display: flex;
             align-items: center;
             gap: 12px;
-            font-weight: 600;
-            font-size: 18px;
-            letter-spacing: -0.02em;
+            font-weight: 800;
+            font-size: 20px;
         }
 
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #10b981, #06b6d4);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .logo-icon svg {
-            width: 20px;
-            height: 20px;
-            stroke: #000;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .date-badge {
-            font-size: 12px;
-            color: var(--text-tertiary);
-            padding: 6px 12px;
-            background: var(--bg-tertiary);
-            border-radius: 6px;
-            border: 1px solid var(--border-subtle);
-        }
-
-        .github-link {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            font-size: 13px;
-            transition: color 0.15s;
-        }
-
-        .github-link:hover {
-            color: var(--text-primary);
-        }
-
-        /* Main Content */
-        main {
-            padding: 48px 0;
-        }
-
-        /* Digest Item */
-        .digest-item {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-subtle);
-            border-radius: 16px;
-            margin-bottom: 32px;
-            overflow: hidden;
-            transition: border-color 0.2s;
-        }
-
-        .digest-item:hover {
-            border-color: var(--border);
-        }
-
-        .digest-header {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 20px 24px;
-            background: var(--bg-tertiary);
-            border-bottom: 1px solid var(--border-subtle);
-        }
-
-        .digest-icon {
+        .brand-mark {
+            display: grid;
+            place-items: center;
             width: 40px;
             height: 40px;
-            background: var(--accent-dim);
-            border-radius: 10px;
+            border-radius: 8px;
+            background: var(--accent-strong);
+            color: #fff;
+        }
+
+        .top-actions {
             display: flex;
             align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .digest-icon svg {
-            width: 20px;
-            height: 20px;
-            color: var(--accent);
-        }
-
-        .digest-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-        }
-
-        .digest-date {
-            font-size: 13px;
-            color: var(--text-tertiary);
-            font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
-        }
-
-        .digest-content {
-            padding: 24px;
-        }
-
-        /* Markdown Content Styles */
-        .digest-content h3 {
-            font-size: 16px;
-            font-weight: 600;
-            margin: 24px 0 16px;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .digest-content h3::before {
-            content: '';
-            width: 4px;
-            height: 18px;
-            background: var(--accent);
-            border-radius: 2px;
-        }
-
-        .digest-content h4 {
+            gap: 12px;
+            color: var(--muted);
             font-size: 14px;
-            font-weight: 600;
-            margin: 20px 0 12px;
-            color: var(--text-primary);
         }
 
-        .digest-content p {
-            margin-bottom: 12px;
-            color: var(--text-secondary);
+        .button {
+            display: inline-flex;
+            align-items: center;
+            min-height: 38px;
+            padding: 0 14px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--ink);
+            font-weight: 700;
         }
 
-        .digest-content strong {
-            color: var(--text-primary);
-            font-weight: 600;
+        .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+            gap: 22px;
+            align-items: stretch;
+            margin-bottom: 24px;
         }
 
-        .digest-content em {
-            color: var(--text-tertiary);
+        .hero-main,
+        .metric-panel,
+        .article,
+        .archive-card {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface);
+            box-shadow: var(--shadow);
         }
 
-        .digest-content ul {
-            margin-bottom: 20px;
-            padding-left: 24px;
+        .hero-main {
+            padding: 34px;
         }
 
-        .digest-content li {
-            margin-bottom: 12px;
-            color: var(--text-secondary);
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--accent-strong);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }
 
-        .digest-content li::marker {
-            color: var(--accent);
+        h1 {
+            margin: 0;
+            font-size: clamp(34px, 6vw, 64px);
+            line-height: 1.02;
+            letter-spacing: 0;
         }
 
-        .digest-content a {
-            color: var(--accent);
-            border-bottom: 1px solid transparent;
-            transition: border-color 0.15s;
+        .lede {
+            max-width: 760px;
+            margin: 18px 0 0;
+            color: var(--muted);
+            font-size: 17px;
         }
 
-        .digest-content a:hover {
-            border-bottom-color: var(--accent);
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 22px;
         }
 
-        .digest-content hr {
-            border: none;
-            border-top: 1px solid var(--border-subtle);
-            margin: 32px 0;
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 32px;
+            padding: 0 11px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface-alt);
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
         }
 
-        .digest-content blockquote {
-            border-left: 3px solid var(--accent);
-            padding-left: 16px;
-            margin: 20px 0;
-            color: var(--text-tertiary);
+        .metric-panel {
+            padding: 22px;
+            display: grid;
+            gap: 12px;
         }
 
-        .digest-content code {
-            background: var(--bg-tertiary);
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
-            font-size: 0.9em;
-            color: var(--text-primary);
-        }
-
-        .digest-content pre {
-            background: var(--bg-tertiary);
+        .metric {
             padding: 16px;
             border-radius: 8px;
-            overflow-x: auto;
-            margin: 16px 0;
-            border: 1px solid var(--border-subtle);
+            background: var(--surface-alt);
+            border: 1px solid var(--line);
         }
 
-        .digest-content pre code {
-            background: none;
-            padding: 0;
-            color: var(--text-secondary);
+        .metric span {
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
         }
 
-        /* Empty State */
-        .empty {
-            text-align: center;
-            padding: 80px 24px;
-            color: var(--text-tertiary);
-            font-size: 15px;
+        .metric strong {
+            display: block;
+            margin-top: 4px;
+            font-size: 26px;
         }
 
-        /* Footer */
-        footer {
-            border-top: 1px solid var(--border-subtle);
-            padding: 32px 0;
-            margin-top: 48px;
-        }
-
-        .footer-inner {
+        .section-nav {
             display: flex;
-            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 0 0 22px;
+        }
+
+        .section-nav span {
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: #e8f3ef;
+            color: var(--accent-strong);
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .article {
+            padding: 28px 34px;
+        }
+
+        .article h1 {
+            font-size: 32px;
+            margin-bottom: 18px;
+        }
+
+        .article h2 {
+            margin: 34px 0 14px;
+            padding-top: 22px;
+            border-top: 1px solid var(--line);
+            font-size: 24px;
+        }
+
+        .article h3 {
+            margin: 22px 0 10px;
+            font-size: 18px;
+        }
+
+        .article p,
+        .article li {
+            color: #38352f;
+        }
+
+        .article blockquote {
+            margin: 18px 0;
+            padding: 14px 18px;
+            border-left: 4px solid var(--accent);
+            background: #eef7f3;
+            color: var(--accent-strong);
+            font-weight: 700;
+        }
+
+        .article a {
+            font-weight: 700;
+            border-bottom: 1px solid rgba(15, 118, 110, 0.25);
+        }
+
+        .article hr {
+            border: 0;
+            border-top: 1px solid var(--line);
+            margin: 28px 0;
+        }
+
+        .archive {
+            margin-top: 24px;
+        }
+
+        .section-title {
+            display: flex;
             justify-content: space-between;
+            align-items: end;
+            gap: 16px;
+            margin: 0 0 14px;
         }
 
-        .footer-text {
+        .section-title h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .archive-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .archive-card {
+            display: block;
+            min-height: 178px;
+            padding: 18px;
+            color: var(--ink);
+            transition: transform 0.18s ease, border-color 0.18s ease;
+        }
+
+        .archive-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+
+        .archive-card span {
+            color: var(--accent);
             font-size: 13px;
-            color: var(--text-tertiary);
+            font-weight: 800;
         }
 
-        .footer-links {
-            display: flex;
-            gap: 24px;
+        .archive-card strong {
+            display: block;
+            margin-top: 8px;
+            line-height: 1.35;
         }
 
-        .footer-link {
+        .archive-card p {
+            margin: 10px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .empty {
+            color: var(--muted);
+        }
+
+        footer {
+            margin-top: 34px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
             font-size: 13px;
-            color: var(--text-tertiary);
-            text-decoration: none;
-            transition: color 0.15s;
         }
 
-        .footer-link:hover {
-            color: var(--text-primary);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .container {
-                padding: 0 16px;
+        @media (max-width: 860px) {
+            .topbar,
+            .hero,
+            .section-title {
+                display: block;
             }
 
-            .header-inner {
-                height: 56px;
+            .top-actions {
+                margin-top: 14px;
             }
 
-            .logo {
-                font-size: 16px;
+            .metric-panel {
+                margin-top: 18px;
             }
 
-            .logo-icon {
-                width: 32px;
-                height: 32px;
+            .article,
+            .hero-main {
+                padding: 22px;
             }
 
-            .digest-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-                padding: 16px 20px;
-            }
-
-            .digest-content {
-                padding: 20px 16px;
-            }
-
-            .digest-title {
-                font-size: 16px;
-            }
-
-            .footer-inner {
-                flex-direction: column;
-                gap: 16px;
-                text-align: center;
-            }
-
-            .header-right {
-                gap: 8px;
-            }
-
-            .date-badge {
-                display: none;
+            .archive-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="header-inner">
-                <div class="logo">
-                    <div class="logo-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                        </svg>
-                    </div>
-                    <span>每日科技简报</span>
-                </div>
-                <div class="header-right">
-                    <span class="date-badge">2026年01月17日</span>
-                    <a href="https://github.com/biyan113/cron" class="github-link">
-                        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
-                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-                        </svg>
-                        GitHub
-                    </a>
-                </div>
+    <div class="shell">
+        <header class="topbar">
+            <a class="brand" href="./index.html">
+                <span class="brand-mark">¥</span>
+                <span>每日财经简报</span>
+            </a>
+            <div class="top-actions">
+                <span>更新于 2026年07月07日 19:38</span>
+                <a class="button" href="digests/index.html">历史归档</a>
+                <a class="button" href="https://github.com/tinajiwona/daily-tech-digest">GitHub</a>
             </div>
-        </div>
-    </header>
+        </header>
 
-    <main>
-        <div class="container">
-            
-        <article class="digest-item" data-date="2026-01-17">
-            <div class="digest-header">
-                <div class="digest-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                        <line x1="10" y1="9" x2="8" y2="9"/>
-                    </svg>
-                </div>
-                <div>
-                    <h2 class="digest-title">科技简报 | 2026-01-17</h2>
-                    <span class="digest-date">2026-01-17</span>
+        <section class="hero">
+            <div class="hero-main">
+                <p class="eyebrow">Daily Finance Briefing</p>
+                <h1>财经简报 | 2026年4月11日</h1>
+                <p class="lede">今日市场受中东局势缓和与AI行业动态双重影响，投资者情绪谨慎乐观。A股券商板块异动，白酒行业周期性复苏信号显现，而国际油价回落至100美元下方，地缘政治风险溢价有所降低。</p>
+                <div class="meta-row">
+                    <span class="pill">日期 2026-04-11</span>
+                    <span class="pill">约 3,077 字</span>
+                    <span class="pill">微信同步推送</span>
                 </div>
             </div>
-            <div class="digest-content">
-                <h1 id="2026-01-17">科技简报 | 2026-01-17</h1>
-<p><strong>导语：</strong> AI 开发工具的争议与进化成为今日焦点，Cloudflare 与 ClickHouse 的收购动作揭示了基础设施与可观测性的融合趋势。国内方面，华为重回手机出货量榜首，而围绕 IDE 未来的讨论引发了开发者社区的激烈交锋。</p>
-<hr />
-<h3 id="1">1. 今日热点</h3>
-<p><strong>Cursor “浏览器实验”数据造假风波</strong><br />
-<a href="https://embedding-shapes.github.io/cursor-implied-success-without-evidence/">Cursor's latest “browser experiment” implied success without evidence</a><br />
-备受追捧的 AI 编辑器 Cursor 被指在“浏览器控制”实验中暗示成功却缺乏证据支持。文章质疑其营销展示与实际体验存在差距，引发了关于 AI 工具是否过度宣传的广泛讨论。这提醒我们，在 AI 辅助编程的狂欢中，仍需保持理性验证。</p>
-<p><strong>Cloudflare 收购 Astro，前端生态再洗牌</strong><br />
-<a href="https://astro.build/blog/joining-cloudflare/">Cloudflare acquires Astro</a><br />
-前端框架 Astro 被 Cloudflare 收购。这标志着边缘计算巨头正在进一步整合前端生态，推动 Web 开发向边缘侧迁移。对于开发者而言，Asturo 与 Cloudflare 的深度集成可能意味着更快的部署速度和更优的边缘渲染体验。</p>
-<p><strong>IDE 消亡之年？Steve Yegge 语出惊人</strong><br />
-<a href="https://www.infoq.cn/article/SJNt2c2Sh5AgO4LbiSC8?utm_source=rss&amp;utm_medium=article">IDE消亡之年？Steve Yegge 两句狠话：2026 年还用 IDE 就不行</a><br />
-资深程序员 Steve Yegge 爆论称“2026 年还用 IDE 就不行”，建议每天烧 500–1000 美元的 Token 费用。这一观点在 V2EX 等社区引发热议，折射出传统 IDE 与 AI 辅助环境（如 Cursor/Copilot）之间日益激烈的范式转移。</p>
-<p><strong>Let's Encrypt 支持 6 天证书与 IP 地址证书</strong><br />
-<a href="https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability">6-Day and IP Address Certificates Are Generally Available</a><br />
-Let's Encrypt 正式发布 6 天有效期证书和 IP 地址证书。这一更新极大地提升了自动化证书管理的灵活性，特别是对于那些无域名或需要高频轮换密钥的内部服务而言，是安全运维领域的一大利好。</p>
-<hr />
-<h3 id="2">2. 技术趋势</h3>
-<p><strong>企业级 AI 正在从“单兵”走向“协同”</strong><br />
-从腾讯云发布 AI 原生 Widget 到百度文心内测“多人多 Agent”群聊，再到多智能体任务分配技术的讨论，显示 <strong>AI Agent</strong> 正在从单一工具向系统化、协作化演进。未来的企业应用将更多依赖多个 Agent 互相配合完成任务。</p>
-<p><strong>基础设施厂商“补课”可观测性与数据流</strong><br />
-ClickHouse 收购 Langfuse（LLM 可观测性平台），Cloudflare 收购 Astro（前端框架）。这表明单纯的算力和存储已不够，云厂商正急于通过收购将<strong>应用层的数据流、监控和开发体验</strong>整合进自己的护城河。</p>
-<p><strong>供应链安全与协议弃用</strong><br />
-Google 发布彩虹表以加速淘汰 Net-NTLMv1 协议，同时针对 Pixel 9 的零点击漏洞被曝光。随着攻击手段升级，老旧认证协议的淘汰和移动端底层安全的攻防战将是 2026 年的安全主旋律。</p>
-<hr />
-<h3 id="3">3. 产品观察</h3>
-<p><strong>Apple Pay 中国区十年大更</strong><br />
-<a href="https://sspai.com/post/105462">Apple Pay 公布 2025 年成绩单，迎来入华十周年大更新</a><br />
-作为 Apple Pay 入华十周年的重要节点，虽然具体功能细节尚未完全披露，但结合此前 V2EX 用户关于“购买礼品卡”的反馈，苹果正在试图打通更多本地化支付场景，以提升用户留存。</p>
-<p><strong>Opera One R3：重构 AI 底层</strong><br />
-<a href="https://www.oschina.net/news/397195">Opera One 浏览器发布 R3 更新，重构 AI 底层、优化智能 AI 体验</a><br />
-Opera 并没有随波逐流，而是在其浏览器内核中深度重构了 AI 底层。这预示着浏览器将不再仅仅是内容展示窗口，而是成为本地化 AI 运算的首要入口。</p>
-<p><strong>1Panel v2.0.17：面向多节点的服务器管理</strong><br />
-<a href="https://www.oschina.net/news/397217">1Panel v2.0.17 发布，支持多节点概览和应用多主机部署</a><br />
-国产开源服务器管理面板 1Panel 推出新版，重点支持多主机部署。在云原生时代，轻量级的多节点管理工具正在成为个人开发者和小微企业的刚需。</p>
-<hr />
-<h3 id="4">4. 推荐阅读</h3>
-<p><strong><a href="https://nanonets.com/cookbooks/structured-llm-o utputs">LLM Structured Outputs Handbook</a></strong><br />
-<em>技术必读</em> 深入探讨如何让大模型输出结构化数据。如果你正为 AI 生成 JSON 报错而头疼，这是一份实用的实操指南。</p>
-<p><strong><a href="http://www.huxiu.com/article/4826883?f=wangzhan">从珠峰滑下来，最难的到底是哪一步？</a></strong><br />
-<em>商业视角</em> 非常深刻的中国企业出海复盘。文章跳出了简单的“卖货”逻辑，探讨了品牌在全球化过程中本地化与合规的深水区。</p>
-<p><strong><a href="https://www.niemanlab.org/2026/01/after-25-years-wikipedia-has-proved-that-news-doesnt-need-to-look-like-news/">After 25 years, Wikipedia has proved that news doesn't need to look like news</a></strong><br />
-<em>媒体思考</em> 维基百科成立 25 周年的深度思考。在一个信息碎片化的时代，维基百科证明了“缓慢的共识”依然具有无与伦比的价值。</p>
-<p><strong><a href="https://alexharri.com/blog/ascii-rendering">ASCII characters are not pixels: a deep dive into ASCII rendering</a></strong><br />
-<em>硬核技术</em> 关于字符渲染的底层原理科普。如果你想了解终端如何将字符转化为图像，这篇文章充满了极客的乐趣。</p>
-<p><strong><a href="https://bfl.ai/blog/flux2-klein-towards-interactive-visual-intelligence">FLUX.2 [Klein]: Towards Interactive Visual Intelligence</a></strong><br />
-<em>前沿视觉</em> Black Forest Lab 发布 FLUX.2 Klein，致力于实现“交互式视觉智能”。这可能意味着 AI 视频生成正从离线渲染走向实时交互。</p>
-            </div>
+            <aside class="metric-panel">
+                <div class="metric"><span>归档简报</span><strong>85</strong></div>
+                <div class="metric"><span>最近更新</span><strong>2026-04-11</strong></div>
+                <div class="metric"><span>运行方式</span><strong>GitHub Actions</strong></div>
+            </aside>
+        </section>
+
+        <div class="section-nav"><span>🔥 今日热点</span><span>📈 市场动态</span><span>💰 宏观与政策</span><span>🏢 行业观察</span><span>🌍 国际视野</span><span>💡 投资洞察</span><span>🎯 选题灵感</span><span>📚 延伸阅读</span></div>
+
+        <article class="article">
+            <h1>财经简报 | 2026年4月11日</h1>
+<blockquote>今日市场受中东局势缓和与AI行业动态双重影响，投资者情绪谨慎乐观。A股券商板块异动，白酒行业周期性复苏信号显现，而国际油价回落至100美元下方，地缘政治风险溢价有所降低。</blockquote>
+<h2>🔥 今日热点</h2>
+<ul>
+<li><a href="https://www.ftchinese.com/story/001109420">阿里巴巴将战略重心从开源AI转向模型变现</a></li>
+</ul>
+<p><strong>看点</strong>: 行业风向转变，AI商业化进程加速，影响相关产业链估值。</p>
+<ul>
+<li><a href="https://www.ftchinese.com/story/001109419">受伊朗战事冲击，中国PPI转正</a></li>
+</ul>
+<p><strong>看点</strong>: 地缘冲突传导至国内物价，上游行业或迎涨价周期。</p>
+<ul>
+<li><a href="https://www.ftchinese.com/story/001109413">Sora之死：最烧钱的AI输给了谁</a></li>
+</ul>
+<p><strong>看点</strong>: AI投资泡沫破裂警示，高投入项目面临盈利压力。</p>
+<ul>
+<li><a href="http://xueqiu.com/7579238876/383378969">清仓万科，我的反思和收获</a></li>
+</ul>
+<p><strong>看点</strong>: 房地产投资逻辑转变，头部房企风险重新定价。</p>
+<ul>
+<li><a href="https://36kr.com/p/3759598959969030">欣旺达装车特斯拉，供应全球车型｜36氪独家</a></li>
+</ul>
+<p><strong>看点</strong>: 供应链格局重塑，中国电池企业全球化突破。</p>
+<h2>📈 市场动态</h2>
+<p><strong>A股市场</strong></p>
+<p><a href="http://xueqiu.com/7913104177/383273898">白酒行业周期数据分析</a></p>
+<p>数据显示2026年一季度白酒行业营收同比增长12.3%，毛利率提升至68.5%，库存周期进入下行通道。高端白酒价格企稳，次高端品牌加速渠道下沉。对投资者而言，白酒板块估值修复空间打开，但需关注消费复苏持续性，建议关注具备品牌壁垒和渠道优势的龙头企业。</p>
+<p><strong>券商板块异动</strong></p>
+<p><a href="http://xueqiu.com/7318086163/383359741">终于轮到券商牛了！</a></p>
+<p>今日券商板块集体上涨，平均涨幅达3.8%，成交量放大至15%。市场预期注册制改革深化将提升券商投行业务收入，同时财富管理转型加速。对普通投资者而言，券商股具有高贝塔特性，适合作为市场反弹的配置标的，但需警惕政策利好兑现后的回调风险。</p>
+<p><strong>大宗商品</strong></p>
+<p><a href="https://www.cnbc.com/2026/04/10/oil-price-wti-brent-saudi-pipeline-attack-middle-east-war.html">U.S. oil slips below $100 as Trump demands reopening of Strait of Hormuz</a></p>
+<p>WTI原油价格跌破100美元/桶，跌幅达4.2%，布伦特原油下跌3.8%。特朗普呼吁重新开放霍尔木兹海峡缓解供应担忧。对国内消费者而言，油价回落将降低交通和物流成本，但需关注地缘政治反复可能带来的价格波动，建议相关企业锁定远期价格。</p>
+<h2>💰 宏观与政策</h2>
+<p><strong>PPI转正信号</strong></p>
+<p><a href="https://www.ftchinese.com/story/001109419">受伊朗战事冲击，中国PPI转正</a></p>
+<p>3月PPI同比上涨0.3%，结束连续8个月负增长，主要受国际能源价格传导和国内基建投资拉动。央行可能维持偏宽松货币政策以平衡通胀压力。对普通人而言，工业品价格上涨可能逐步传导至消费品，建议关注必需消费品和公用事业板块的抗通胀属性。</p>
+<p><strong>AI安全监管</strong></p>
+<p><a href="https://www.cnbc.com/2026/04/10/trump-white-house-ai-cyber-threat-anthropic-mythos.html">Vance, Bessent questioned tech giants on AI security before Anthropic&#x27;s Mythos release</a></p>
+<p>美国白宫要求科技巨头加强AI安全审查，Anthropic推迟发布Mythos模型。国内监管可能跟进AI安全标准，相关企业需增加合规投入。对投资者而言，AI监管趋严将加速行业洗牌，具备技术壁垒和合规优势的企业将获得溢价。</p>
+<p><strong>房地产政策调整</strong></p>
+<p><a href="http://xueqiu.com/7579238876/383378969">清仓万科，我的反思和收获</a></p>
+<p>市场传闻一线城市将优化限购政策，支持刚性和改善性住房需求。政策导向从&quot;防风险&quot;转向&quot;促发展&quot;，房企融资环境有望改善。对普通购房者而言，政策松绑可能带来短期房价企稳，但需警惕三四线城市库存压力，建议优先选择核心地段优质资产。</p>
+<h2>🏢 行业观察</h2>
+<p><strong>AI商业化加速</strong></p>
+<p><a href="https://www.ftchinese.com/story/001109420">阿里巴巴将战略重心从开源AI转向模型变现</a></p>
+<p>阿里云调整AI战略，重点发展行业大模型商业化应用，预计2026年AI相关收入占比将提升至25%。企业级AI服务市场增速达40%，远高于消费级市场。对投资者而言，AI商业化落地将带动算力、数据、应用全产业链增长，建议关注具备场景优势的垂直领域解决方案提供商。</p>
+<p><strong>新能源汽车供应链</strong></p>
+<p><a href="https://36kr.com/p/3759598959969030">欣旺达装车特斯拉，供应全球车型｜36氪独家</a></p>
+<p>欣旺达成为特斯拉电池供应商，将供应Model 2和Model Y车型，预计年供货量超10GWh。国内电池企业加速全球化布局，欧洲市场份额提升至35%。对消费者而言，供应链竞争加剧将推动电池成本下降，新能源汽车价格有望进一步下探；对投资者而言，具备技术优势和海外渠道的电池企业更具长期价值。</p>
+<p><strong>乳业区域扩张</strong></p>
+<p><a href="http://xueqiu.com/1830902728/383279044">新疆的天润乳业已经走出新疆</a></p>
+<p>天润乳业2025年营收突破80亿元，疆外收入占比达45%，华东和华南市场增速超30%。低温奶消费升级带动行业增长，区域乳企全国化加速。对投资者而言，乳业龙头具备品牌溢价和渠道优势，建议关注具备区域壁垒和产品创新能力的细分市场领导者。</p>
+<h2>🌍 国际视野</h2>
+<p><strong>AI安全威胁升级</strong></p>
+<p><a href="https://www.cnbc.com/2026/04/10/sam-altman-house-hit-with-molotov-cocktail-openai-office-threatened.html">Man arrested after Sam Altman&#x27;s house hit with Molotov cocktail, OpenAI headquarters threatened</a></p>
+<p>OpenAI CEO住所遭袭击，AI安全争议引发社会关注。欧盟加速推进AI法案，要求高风险系统通过安全认证。对国内企业而言，AI安全合规成本上升，但技术领先企业将获得国际竞争优势。对普通用户而言，AI安全风险提示需谨慎使用生成式AI服务。</p>
+<p><strong>中东局势缓和</strong></p>
+<p><a href="https://www.ftchinese.com/story/001109415">通过霍尔木兹海峡的船舶比激烈交战阶段更少</a></p>
+<p>霍尔木兹海峡船舶流量较冲突高峰下降15%，地缘政治风险溢价回落。美国与伊朗达成临时停火协议，原油供应担忧缓解。对全球市场而言，能源价格波动性降低，风险资产吸引力提升；对国内而言，进口成本下降有助于缓解输入性通胀压力。</p>
+<h2>💡 投资洞察</h2>
+<p><strong>AI投资逻辑转变</strong></p>
+<p><a href="https://www.ftchinese.com/story/001109413">Sora之死：最烧钱的AI输给了谁</a></p>
+<p>知名投资人Michael Burry继续做空Palantir，认为AI商业化进程慢于预期。高盛研报指出，2026年AI投资将从基础设施转向应用层，企业级AI服务增速达45%。对投资者而言，AI投资需关注实际落地场景和盈利能力，建议配置具备客户粘性和数据壁垒的垂直领域AI企业。</p>
+<p><strong>白酒行业周期判断</strong></p>
+<p><a href="http://xueqiu.com/4036694201/383053515">关于白酒26Q1业绩的分析与展望</a></p>
+<p>中信证券白酒行业报告指出，2026年一季度高端白酒库存去化完成80%，次高端品牌渠道库存降至健康水平。行业进入量价齐升阶段，龙头酒企2026年EPS增速预期达18%。对投资者而言，白酒板块估值修复空间打开，但需关注消费复苏持续性，建议关注具备品牌壁垒和渠道优势的龙头企业。</p>
+<h2>🎯 选题灵感</h2>
+<p><strong>深度选题</strong>: &quot;AI商业化落地：从烧钱到赚钱的临界点&quot;</p>
+<ul>
+<li>理由: 行业正处于商业化关键转折点，市场关注度极高</li>
+<li>切入点: 分析头部企业商业化路径，对比国内外AI商业化差异</li>
+</ul>
+<p><strong>热点解读</strong>: &quot;中东局势缓和如何重塑全球能源格局&quot;</p>
+<ul>
+<li>理由: 地缘政治对能源市场影响深远，投资者需要前瞻性分析</li>
+<li>切入点: 解读停火协议对原油供需的实质性影响，分析能源股投资机会</li>
+</ul>
+<p><strong>数据解读</strong>: &quot;PPI转正：中国经济复苏的先行指标还是昙花一现？&quot;</p>
+<ul>
+<li>理由: 工业品价格变化对经济周期判断至关重要</li>
+<li>切入点: 结合历史数据对比分析，解读PPI转正的可持续性</li>
+</ul>
+<p><strong>投资教育</strong>: &quot;如何识别白酒行业的周期拐点&quot;</p>
+<ul>
+<li>理由: 白酒行业周期性强，普通投资者难以把握买卖时机</li>
+<li>切入点: 从库存、价格、渠道三个维度构建周期判断框架</li>
+</ul>
+<p><strong>行业分析</strong>: &quot;新能源汽车供应链：从内卷到出海的转型之路&quot;</p>
+<ul>
+<li>理由: 供应链竞争格局变化直接影响投资价值判断</li>
+<li>切入点: 分析头部电池企业的全球化战略，评估海外市场拓展风险</li>
+</ul>
+<h2>📚 延伸阅读</h2>
+<ul>
+<li><a href="https://www.ftchinese.com/story/001109420">阿里巴巴将战略重心从开源AI转向模型变现</a></li>
+<li><a href="https://www.ftchinese.com/story/001109419">受伊朗战事冲击，中国PPI转正</a></li>
+<li><a href="http://xueqiu.com/7579238876/383378969">清仓万科，我的反思和收获</a></li>
+<li><a href="https://36kr.com/p/3759598959969030">欣旺达装车特斯拉，供应全球车型｜36氪独家</a></li>
+<li><a href="http://xueqiu.com/7913104177/383273898">白酒行业周期数据分析</a></li>
+</ul>
+<p>⚠️ <strong>风险提示</strong>: 本简报仅供参考，不构成投资建议。市场有风险，投资需谨慎。</p>
         </article>
-        
-        </div>
-    </main>
 
-    <footer>
-        <div class="container">
-            <div class="footer-inner">
-                <div class="footer-text">&copy; 2026 每日科技简报 · 由 Claude AI 自动生成</div>
-                <div class="footer-links">
-                    <a href="https://github.com/biyan113/cron" class="footer-link">GitHub</a>
-                    <a href="https://github.com/biyan113/cron" class="footer-link">V2EX</a>
-                    <a href="https://github.com/biyan113/cron" class="footer-link">Hacker News</a>
-                </div>
+        <section class="archive">
+            <div class="section-title">
+                <h2>最近归档</h2>
+                <a class="button" href="digests/index.html">查看全部</a>
             </div>
-        </div>
-    </footer>
+            <div class="archive-grid">
+                
+            <a class="archive-card" href="digests/2026-04-10.md">
+                <span>2026-04-10</span>
+                <strong>2026年4月10日 财经简报</strong>
+                <p>今日全球市场受中东局势持续紧张、AI技术竞争加剧及地缘政治风险多重因素影响，原油价格大幅波动，科技股分化明显，投资者密切关注各国政策应对措施。</p>
+            </a>
+            
+
+            <a class="archive-card" href="digests/2026-04-09.md">
+                <span>2026-04-09</span>
+                <strong>财经简报 | 2026-04-09</strong>
+                <p>地缘政治缓和推动油价暴跌，科技巨头AI竞赛白热化，市场关注政策转向与新兴投资机会。</p>
+            </a>
+            
+
+            <a class="archive-card" href="digests/2026-04-08.md">
+                <span>2026-04-08</span>
+                <strong>2026年4月8日 财经简报</strong>
+                <p>2026年4月8日 财经简报 导语： 今日市场聚焦中东地缘政治风险缓解、科技股估值重估及新能源产业链动态，油价大幅波动引发全球市场连锁反应，AI与绿色转型成为投资主线。 🔥 今日热点 1. 特朗普暂停对伊朗攻击两周，油价暴跌9% 看点 ：地缘风险骤降，油价暴跌9%，全球通胀压力缓解，能源股承压。 2. 沙特原油创纪录溢价，OPEC+维持减产 看点 ：沙特溢价...</p>
+            </a>
+            
+
+            <a class="archive-card" href="digests/2026-04-07.md">
+                <span>2026-04-07</span>
+                <strong>财经简报 | 2026-04-07</strong>
+                <p>财经简报 | 2026 04 07 导语 ：今日市场聚焦伊朗局势、科技巨头动态及政策变化，美股受地缘政治影响波动，AI与半导体领域持续活跃，投资者关注利率政策与市场底部信号。 🔥 今日热点 1. 特朗普称伊朗停火提案&quot;重要但不够好&quot;，霍尔木兹海峡临近截止日期 看点 ：中东局势升级可能推高油价，影响全球供应链与通胀预期。 2. Broadcom与谷歌、Anth...</p>
+            </a>
+            
+
+            <a class="archive-card" href="digests/2026-04-06.md">
+                <span>2026-04-06</span>
+                <strong>财经简报 | 2026年4月6日</strong>
+                <p>地缘政治紧张局势升级，科技行业AI竞争加剧，全球市场关注政策动向与经济数据。</p>
+            </a>
+            
+
+            <a class="archive-card" href="digests/2026-04-05.md">
+                <span>2026-04-05</span>
+                <strong>财经简报 | 2026-04-05</strong>
+                <p>财经简报 | 2026 04 05 导语 ：地缘政治紧张局势升级、科技巨头AI战略调整、全球经济数据波动，今日市场焦点集中在美伊冲突、苹果AI布局及全球宏观经济变化上。 🔥 今日热点 1. 特朗普警告伊朗&quot;48小时前地狱将降临&quot;，美军搜索失踪成员 intensifies 看点 ：中东局势骤然紧张，油价飙升，避险资产受追捧。 2. 苹果50周年：iPhone制...</p>
+            </a>
+            
+
+            <a class="archive-card" href="digests/2026-04-04.md">
+                <span>2026-04-04</span>
+                <strong>2026年4月4日 财经简报</strong>
+                <p>2026年4月4日 财经简报 导语 ：今日市场聚焦美国就业数据超预期、中东局势紧张升级、科技巨头高管变动及AI领域动态，A股市场风格切换需求强烈，碳酸锂价格大幅波动引发关注。 🔥 今日热点 1. 美国3月非农就业增加17.8万人，失业率4.3% 看点 ：就业数据超预期，强化美联储降息预期，利好全球风险资产。 2. 美国战机在伊朗被击落，一名机组人员获救 看点...</p>
+            </a>
+            
+
+            <a class="archive-card" href="digests/2026-04-03.md">
+                <span>2026-04-03</span>
+                <strong>财经简报 | 2026年4月3日</strong>
+                <p>财经简报 | 2026年4月3日 导语： 伊朗地缘政治紧张局势持续升级，美股就业数据与科技巨头动态备受关注，全球市场面临多重不确定性。 🔥 今日热点 1. 特斯拉Q1交付报告不及预期，股价创2026年最大跌幅 看点 ：交付数据低于市场预期，引发投资者对电动车需求放缓担忧，拖累特斯拉股价单日暴跌。 2. 特朗普解雇司法部长Pam Bondi 看点 ：政府人事变...</p>
+            </a>
+            
+
+            <a class="archive-card" href="digests/2026-04-02.md">
+                <span>2026-04-02</span>
+                <strong>2026年4月2日 财经简报</strong>
+                <p>今日市场聚焦SpaceX IPO、美联储政策转向及美伊地缘政治风险，科技与医药板块波动加剧，投资者需关注政策变化对资产配置的影响。</p>
+            </a>
+            
+
+            <a class="archive-card" href="digests/2026-04-01.md">
+                <span>2026-04-01</span>
+                <strong>财经简报 | 2026年4月1日</strong>
+                <p>今日市场聚焦地缘政治风险与科技巨头财报，AI概念股波动加剧，中东局势变化引发全球资产重新定价。</p>
+            </a>
+            
+
+            <a class="archive-card" href="digests/2026-03-31.md">
+                <span>2026-03-31</span>
+                <strong>财经简报 | 2026年3月31日</strong>
+                <p>财经简报 | 2026年3月31日 今日核心：油价飙升引发全球通胀担忧，美联储暂缓加息，科技股震荡，中国供应链调整应对地缘风险。 🔥 今日热点 1. Brent原油创历史性月度暴涨，WTI自2022年来首破100美元 看点 ：霍尔木兹海峡危机推高油价，全球通胀压力骤增，美联储暂缓加息。 2. 中国供应商警告美国将因霍尔木兹海峡关闭面临更高价格 看点 ：全球供...</p>
+            </a>
+            
+
+            <a class="archive-card" href="digests/2026-03-30.md">
+                <span>2026-03-30</span>
+                <strong>财经简报 | 2026-03-30</strong>
+                <p>财经简报 | 2026 03 30 今日核心：地缘政治紧张升级、AI药物突破、房地产政策调整、科技巨头估值争议 🔥 今日热点 1. 巴基斯坦准备主办美伊会谈，特朗普考虑部署地面部队 看点 ：中东局势紧张升级，可能引发油价波动和避险资产需求增加。 2. 特朗普禁止投资者购房政策或牺牲更大房地产交易 看点 ：政策可能抑制房地产流动性，影响市场估值和投资者策略。 ...</p>
+            </a>
+            
+            </div>
+        </section>
+
+        <footer>
+            由 Claude/GLM + GitHub Actions 自动生成。内容仅供参考，不构成投资建议。
+        </footer>
+    </div>
 </body>
 </html>

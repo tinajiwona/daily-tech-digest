@@ -31,7 +31,7 @@ PushPlus 是一个微信消息推送服务，可以让您通过 API 将消息推
 
 1. 访问仓库设置页面：
    ```
-   https://github.com/ccj20181-lab/daily-tech-digest/settings/secrets/actions
+   https://github.com/tinajiwona/daily-tech-digest/settings/secrets/actions
    ```
 
 2. 点击 `New repository secret`
@@ -54,19 +54,20 @@ PushPlus 是一个微信消息推送服务，可以让您通过 API 将消息推
 
 ### 📊 通知标题
 ```
-📊 每日科技简报 2026-01-18
+每日财经简报 2026-01-18
 ```
 
 ### 📝 通知内容
-- 简报摘要（前500字）
-- 在线查看链接（GitHub Pages）
+- 简报导语和板块导航
+- 完整财经简报 HTML 排版
+- 在线查看链接、历史归档链接
 - GitHub Actions 运行链接
 - 生成时间
 
 ### 🔗 快速访问链接
-- **在线简报**: https://ccj20181-lab.github.io/daily-tech-digest/digests/latest.md
-- **历史归档**: https://ccj20181-lab.github.io/daily-tech-digest/digests/
-- **GitHub 仓库**: https://github.com/ccj20181-lab/daily-tech-digest
+- **在线简报**: https://tinajiwona.github.io/daily-tech-digest/digests/latest.md
+- **历史归档**: https://tinajiwona.github.io/daily-tech-digest/digests/
+- **GitHub 仓库**: https://github.com/tinajiwona/daily-tech-digest
 
 ---
 
@@ -136,16 +137,16 @@ schedule:
 
 ### 微信通知示例
 ```
-📊 每日科技简报 2026-01-18
+每日财经简报 2026-01-18
 
-# 科技简报 2026-01-18
+# 财经简报 2026-01-18
 
-**导语：** jQuery 4.0 的发布标志着 Web 时代的又一次迭代...
+**导语：** 今日市场围绕宏观政策、A股结构性机会与国际资产波动展开...
 
 ---
-📅 查看完整简报: https://ccj20181-lab.github.io/daily-tech-digest/digests/latest.md
+📅 查看完整简报: https://tinajiwona.github.io/daily-tech-digest/digests/latest.md
 
-🤖 由 Claude AI + 智谱 GLM-4.7 自动生成
+🤖 由 Claude/GLM + GitHub Actions 自动生成
 ⏰ 生成时间: 2026-01-18 06:00:15
 ```
 

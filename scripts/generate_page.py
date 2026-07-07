@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-生成 GitHub Pages 友好的 HTML 页面
-完整展示 Markdown 内容，带样式和导航
+生成 GitHub Pages 首页。
+
+首页重点展示最新财经简报，并保留最近归档入口。
 """
 
+import html
 import json
 import re
 from datetime import datetime
@@ -14,568 +16,577 @@ import pytz
 try:
     import markdown
 except ImportError:
-    print("警告: 需要安装 markdown")
-    print("运行: pip install markdown")
-    exit(1)
+    markdown = None
 
 
 PROJECT_ROOT = Path(__file__).parent.parent
 CONFIG_PATH = Path(__file__).parent / "config.json"
+REPO_URL = "https://github.com/tinajiwona/daily-tech-digest"
 
 
 def load_config() -> dict:
-    """加载配置文件"""
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
+def plain_text(markdown_text: str) -> str:
+    text = re.sub(r"```.*?```", "", markdown_text, flags=re.S)
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    text = re.sub(r"[#>*_`~-]", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+def extract_title(content: str, fallback: str) -> str:
+    match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
+    return match.group(1).strip() if match else fallback
+
+
+def extract_lede(content: str) -> str:
+    quote = re.search(r"^>\s*(.+)$", content, re.MULTILINE)
+    source = quote.group(1) if quote else plain_text(content)
+    return source[:180] + ("..." if len(source) > 180 else "")
+
+
+def extract_sections(content: str) -> list[str]:
+    return [item.strip() for item in re.findall(r"^##\s+(.+)$", content, re.MULTILINE)]
+
+
+def markdown_to_html(md_content: str) -> str:
+    if markdown:
+        md = markdown.Markdown(
+            extensions=["extra", "tables", "fenced_code", "sane_lists"],
+            output_format="html5",
+        )
+        return md.convert(md_content)
+
+    html_lines = []
+    in_list = False
+
+    for raw_line in md_content.splitlines():
+        line = raw_line.strip()
+        if not line:
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            continue
+
+        if re.match(r"^#{1,4}\s+", line):
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            level = min(len(re.match(r"^#+", line).group()), 4)
+            text = render_inline(line.lstrip("#").strip())
+            html_lines.append(f"<h{level}>{text}</h{level}>")
+            continue
+
+        if line.startswith(">"):
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            html_lines.append(f"<blockquote>{render_inline(line.lstrip('> ').strip())}</blockquote>")
+            continue
+
+        if line in {"---", "***"}:
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            html_lines.append("<hr>")
+            continue
+
+        if line.startswith(("- ", "* ")) or re.match(r"^\d+\.\s+", line):
+            if not in_list:
+                html_lines.append("<ul>")
+                in_list = True
+            text = re.sub(r"^(-|\*|\d+\.)\s+", "", line)
+            html_lines.append(f"<li>{render_inline(text)}</li>")
+            continue
+
+        if in_list:
+            html_lines.append("</ul>")
+            in_list = False
+        html_lines.append(f"<p>{render_inline(line)}</p>")
+
+    if in_list:
+        html_lines.append("</ul>")
+
+    return "\n".join(html_lines)
+
+
+def render_inline(text: str) -> str:
+    escaped = html.escape(text)
+    escaped = re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", escaped)
+    escaped = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', escaped)
+    return escaped
+
+
 def get_digest_files(digests_dir: Path) -> list[dict]:
-    """获取所有简报文件信息"""
     files = []
     pattern = re.compile(r"^\d{4}-\d{2}-\d{2}\.md$")
 
     for file in digests_dir.glob("*.md"):
-        if pattern.match(file.name):
-            date_str = file.stem
-            with open(file, "r", encoding="utf-8") as f:
-                content = f.read()
-                # 提取标题
-                title_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
-                title = title_match.group(1) if title_match else f"{date_str} 科技简报"
+        if not pattern.match(file.name):
+            continue
 
-            files.append({
-                "date": date_str,
+        content = file.read_text(encoding="utf-8")
+        files.append(
+            {
+                "date": file.stem,
                 "filename": file.name,
-                "title": title,
-                "content": content
-            })
+                "title": extract_title(content, f"{file.stem} 财经简报"),
+                "lede": extract_lede(content),
+                "sections": extract_sections(content),
+                "content": content,
+                "words": len(plain_text(content)),
+            }
+        )
 
-    # 按日期倒序排列
     files.sort(key=lambda x: x["date"], reverse=True)
     return files
 
 
-def markdown_to_html(md_content: str) -> str:
-    """将 Markdown 转换为 HTML"""
-    md = markdown.Markdown(
-        extensions=[
-            'extra',
-            'codehilite',
-            'toc',
-            'tables',
-            'fenced_code',
-            'nl2br',
-            'sane_lists'
-        ],
-        extension_configs={
-            'codehilite': {
-                'linenums': False,
-                'css_class': 'highlight'
-            }
-        }
-    )
-    return md.convert(md_content)
+def section_nav(sections: list[str]) -> str:
+    if not sections:
+        return ""
+
+    items = "".join(f"<span>{html.escape(section)}</span>" for section in sections[:8])
+    return f'<div class="section-nav">{items}</div>'
+
+
+def archive_cards(files: list[dict]) -> str:
+    cards = []
+    for item in files[:12]:
+        cards.append(
+            f"""
+            <a class="archive-card" href="digests/{html.escape(item['filename'])}">
+                <span>{html.escape(item['date'])}</span>
+                <strong>{html.escape(item['title'])}</strong>
+                <p>{html.escape(item['lede'])}</p>
+            </a>
+            """
+        )
+    return "\n".join(cards) if cards else '<p class="empty">暂无简报</p>'
 
 
 def generate_page(files: list[dict], output_path: Path):
-    """生成完整的 HTML 页面"""
     tz = pytz.timezone("Asia/Shanghai")
-    now = datetime.now(tz).strftime("%Y年%m月%d日")
+    now = datetime.now(tz).strftime("%Y年%m月%d日 %H:%M")
+    latest = files[0] if files else None
 
-    # 为每个文件生成 HTML
-    digest_htmls = []
-    for item in files[:10]:  # 最多显示 10 份
-        content_html = markdown_to_html(item["content"])
-        digest_htmls.append(f"""
-        <article class="digest-item" data-date="{item['date']}">
-            <div class="digest-header">
-                <div class="digest-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                        <line x1="10" y1="9" x2="8" y2="9"/>
-                    </svg>
-                </div>
-                <div>
-                    <h2 class="digest-title">{item['title']}</h2>
-                    <span class="digest-date">{item['date']}</span>
-                </div>
-            </div>
-            <div class="digest-content">
-                {content_html}
-            </div>
-        </article>
-        """)
+    latest_title = html.escape(latest["title"]) if latest else "每日财经简报"
+    latest_date = html.escape(latest["date"]) if latest else now
+    latest_lede = html.escape(latest["lede"]) if latest else "等待首次生成财经简报。"
+    latest_content = markdown_to_html(latest["content"]) if latest else ""
+    latest_sections = section_nav(latest["sections"] if latest else [])
+    latest_words = f"{latest['words']:,}" if latest else "0"
+    archive_html = archive_cards(files[1:] if len(files) > 1 else files)
 
-    digests_section = "\n".join(digest_htmls) if files else '<p class="empty">暂无简报</p>'
-
-    html = f"""<!DOCTYPE html>
+    html_content = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日科技简报 | Daily Tech Digest</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>每日财经简报 | Daily Finance Digest</title>
     <style>
-        *, *::before, *::after {{
-                       box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }}
-
         :root {{
-            --bg-primary: #0a0a0b;
-            --bg-secondary: #111113;
-            --bg-tertiary: #18181b;
-            --bg-hover: #1f1f23;
-            --border: #27272a;
-            --border-subtle: #1e1e21;
-            --text-primary: #fafafa;
-            --text-secondary: #a1a1aa;
-            --text-tertiary: #71717a;
-            --accent: #10b981;
-            --accent-dim: rgba(16, 185, 129, 0.15);
-            --accent-hover: #059669;
+            --bg: #f7f4ed;
+            --surface: #fffdf8;
+            --surface-alt: #f0eee6;
+            --ink: #201f1b;
+            --muted: #6e6a60;
+            --line: #ddd5c7;
+            --accent: #0f766e;
+            --accent-strong: #134e4a;
+            --warn: #b45309;
+            --shadow: 0 18px 46px rgba(39, 35, 26, 0.1);
         }}
 
-        html {{
-            font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-size: 14px;
-            line-height: 1.6;
+        * {{
+            box-sizing: border-box;
         }}
 
         body {{
-            min-height: 100vh;
-        }}
-
-        ::selection {{
-            background: var(--accent-dim);
-            color: var(--text-primary);
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", Arial, sans-serif;
+            line-height: 1.7;
         }}
 
         a {{
             color: var(--accent);
             text-decoration: none;
-            transition: color 0.15s;
         }}
 
-        a:hover {{
-            color: var(--accent-hover);
-        }}
-
-        .container {{
-            max-width: 1000px;
+        .shell {{
+            max-width: 1180px;
             margin: 0 auto;
-            padding: 0 24px;
+            padding: 28px 20px 56px;
         }}
 
-        /* Header */
-        header {{
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: rgba(10, 10, 11, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border-subtle);
-        }}
-
-        .header-inner {{
+        .topbar {{
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            height: 64px;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 28px;
         }}
 
-        .logo {{
+        .brand {{
             display: flex;
             align-items: center;
             gap: 12px;
-            font-weight: 600;
-            font-size: 18px;
-            letter-spacing: -0.02em;
+            font-weight: 800;
+            font-size: 20px;
         }}
 
-        .logo-icon {{
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #10b981, #06b6d4);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }}
-
-        .logo-icon svg {{
-            width: 20px;
-            height: 20px;
-            stroke: #000;
-        }}
-
-        .header-right {{
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }}
-
-        .date-badge {{
-            font-size: 12px;
-            color: var(--text-tertiary);
-            padding: 6px 12px;
-            background: var(--bg-tertiary);
-            border-radius: 6px;
-            border: 1px solid var(--border-subtle);
-        }}
-
-        .github-link {{
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            font-size: 13px;
-            transition: color 0.15s;
-        }}
-
-        .github-link:hover {{
-            color: var(--text-primary);
-        }}
-
-        /* Main Content */
-        main {{
-            padding: 48px 0;
-        }}
-
-        /* Digest Item */
-        .digest-item {{
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-subtle);
-            border-radius: 16px;
-            margin-bottom: 32px;
-            overflow: hidden;
-            transition: border-color 0.2s;
-        }}
-
-        .digest-item:hover {{
-            border-color: var(--border);
-        }}
-
-        .digest-header {{
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 20px 24px;
-            background: var(--bg-tertiary);
-            border-bottom: 1px solid var(--border-subtle);
-        }}
-
-        .digest-icon {{
+        .brand-mark {{
+            display: grid;
+            place-items: center;
             width: 40px;
             height: 40px;
-            background: var(--accent-dim);
-            border-radius: 10px;
+            border-radius: 8px;
+            background: var(--accent-strong);
+            color: #fff;
+        }}
+
+        .top-actions {{
             display: flex;
             align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }}
-
-        .digest-icon svg {{
-            width: 20px;
-            height: 20px;
-            color: var(--accent);
-        }}
-
-        .digest-title {{
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-        }}
-
-        .digest-date {{
-            font-size: 13px;
-            color: var(--text-tertiary);
-            font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
-        }}
-
-        .digest-content {{
-            padding: 24px;
-        }}
-
-        /* Markdown Content Styles */
-        .digest-content h3 {{
-            font-size: 16px;
-            font-weight: 600;
-            margin: 24px 0 16px;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }}
-
-        .digest-content h3::before {{
-            content: '';
-            width: 4px;
-            height: 18px;
-            background: var(--accent);
-            border-radius: 2px;
-        }}
-
-        .digest-content h4 {{
+            gap: 12px;
+            color: var(--muted);
             font-size: 14px;
-            font-weight: 600;
-            margin: 20px 0 12px;
-            color: var(--text-primary);
         }}
 
-        .digest-content p {{
-            margin-bottom: 12px;
-            color: var(--text-secondary);
+        .button {{
+            display: inline-flex;
+            align-items: center;
+            min-height: 38px;
+            padding: 0 14px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--ink);
+            font-weight: 700;
         }}
 
-        .digest-content strong {{
-            color: var(--text-primary);
-            font-weight: 600;
+        .hero {{
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+            gap: 22px;
+            align-items: stretch;
+            margin-bottom: 24px;
         }}
 
-        .digest-content em {{
-            color: var(--text-tertiary);
+        .hero-main,
+        .metric-panel,
+        .article,
+        .archive-card {{
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface);
+            box-shadow: var(--shadow);
         }}
 
-        .digest-content ul {{
-            margin-bottom: 20px;
-            padding-left: 24px;
+        .hero-main {{
+            padding: 34px;
         }}
 
-        .digest-content li {{
-            margin-bottom: 12px;
-            color: var(--text-secondary);
+        .eyebrow {{
+            margin: 0 0 10px;
+            color: var(--accent-strong);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }}
 
-        .digest-content li::marker {{
-            color: var(--accent);
+        h1 {{
+            margin: 0;
+            font-size: clamp(34px, 6vw, 64px);
+            line-height: 1.02;
+            letter-spacing: 0;
         }}
 
-        .digest-content a {{
-            color: var(--accent);
-            border-bottom: 1px solid transparent;
-            transition: border-color 0.15s;
+        .lede {{
+            max-width: 760px;
+            margin: 18px 0 0;
+            color: var(--muted);
+            font-size: 17px;
         }}
 
-        .digest-content a:hover {{
-            border-bottom-color: var(--accent);
+        .meta-row {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 22px;
         }}
 
-        .digest-content hr {{
-            border: none;
-            border-top: 1px solid var(--border-subtle);
-            margin: 32px 0;
+        .pill {{
+            display: inline-flex;
+            align-items: center;
+            min-height: 32px;
+            padding: 0 11px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface-alt);
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
         }}
 
-        .digest-content blockquote {{
-            border-left: 3px solid var(--accent);
-            padding-left: 16px;
-            margin: 20px 0;
-            color: var(--text-tertiary);
+        .metric-panel {{
+            padding: 22px;
+            display: grid;
+            gap: 12px;
         }}
 
-        .digest-content code {{
-            background: var(--bg-tertiary);
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
-            font-size: 0.9em;
-            color: var(--text-primary);
-        }}
-
-        .digest-content pre {{
-            background: var(--bg-tertiary);
+        .metric {{
             padding: 16px;
             border-radius: 8px;
-            overflow-x: auto;
-            margin: 16px 0;
-            border: 1px solid var(--border-subtle);
+            background: var(--surface-alt);
+            border: 1px solid var(--line);
         }}
 
-        .digest-content pre code {{
-            background: none;
-            padding: 0;
-            color: var(--text-secondary);
+        .metric span {{
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
         }}
 
-        /* Empty State */
-        .empty {{
-            text-align: center;
-            padding: 80px 24px;
-            color: var(--text-tertiary);
-            font-size: 15px;
+        .metric strong {{
+            display: block;
+            margin-top: 4px;
+            font-size: 26px;
         }}
 
-        /* Footer */
-        footer {{
-            border-top: 1px solid var(--border-subtle);
-            padding: 32px 0;
-            margin-top: 48px;
-        }}
-
-        .footer-inner {{
+        .section-nav {{
             display: flex;
-            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 0 0 22px;
+        }}
+
+        .section-nav span {{
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: #e8f3ef;
+            color: var(--accent-strong);
+            font-weight: 700;
+            font-size: 13px;
+        }}
+
+        .article {{
+            padding: 28px 34px;
+        }}
+
+        .article h1 {{
+            font-size: 32px;
+            margin-bottom: 18px;
+        }}
+
+        .article h2 {{
+            margin: 34px 0 14px;
+            padding-top: 22px;
+            border-top: 1px solid var(--line);
+            font-size: 24px;
+        }}
+
+        .article h3 {{
+            margin: 22px 0 10px;
+            font-size: 18px;
+        }}
+
+        .article p,
+        .article li {{
+            color: #38352f;
+        }}
+
+        .article blockquote {{
+            margin: 18px 0;
+            padding: 14px 18px;
+            border-left: 4px solid var(--accent);
+            background: #eef7f3;
+            color: var(--accent-strong);
+            font-weight: 700;
+        }}
+
+        .article a {{
+            font-weight: 700;
+            border-bottom: 1px solid rgba(15, 118, 110, 0.25);
+        }}
+
+        .article hr {{
+            border: 0;
+            border-top: 1px solid var(--line);
+            margin: 28px 0;
+        }}
+
+        .archive {{
+            margin-top: 24px;
+        }}
+
+        .section-title {{
+            display: flex;
             justify-content: space-between;
+            align-items: end;
+            gap: 16px;
+            margin: 0 0 14px;
         }}
 
-        .footer-text {{
+        .section-title h2 {{
+            margin: 0;
+            font-size: 24px;
+        }}
+
+        .archive-grid {{
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }}
+
+        .archive-card {{
+            display: block;
+            min-height: 178px;
+            padding: 18px;
+            color: var(--ink);
+            transition: transform 0.18s ease, border-color 0.18s ease;
+        }}
+
+        .archive-card:hover {{
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }}
+
+        .archive-card span {{
+            color: var(--accent);
             font-size: 13px;
-            color: var(--text-tertiary);
+            font-weight: 800;
         }}
 
-        .footer-links {{
-            display: flex;
-            gap: 24px;
+        .archive-card strong {{
+            display: block;
+            margin-top: 8px;
+            line-height: 1.35;
         }}
 
-        .footer-link {{
+        .archive-card p {{
+            margin: 10px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+        }}
+
+        .empty {{
+            color: var(--muted);
+        }}
+
+        footer {{
+            margin-top: 34px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
             font-size: 13px;
-            color: var(--text-tertiary);
-            text-decoration: none;
-            transition: color 0.15s;
         }}
 
-        .footer-link:hover {{
-            color: var(--text-primary);
-        }}
-
-        /* Responsive */
-        @media (max-width: 768px) {{
-            .container {{
-                padding: 0 16px;
+        @media (max-width: 860px) {{
+            .topbar,
+            .hero,
+            .section-title {{
+                display: block;
             }}
 
-            .header-inner {{
-                height: 56px;
+            .top-actions {{
+                margin-top: 14px;
             }}
 
-            .logo {{
-                font-size: 16px;
+            .metric-panel {{
+                margin-top: 18px;
             }}
 
-            .logo-icon {{
-                width: 32px;
-                height: 32px;
+            .article,
+            .hero-main {{
+                padding: 22px;
             }}
 
-            .digest-header {{
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-                padding: 16px 20px;
-            }}
-
-            .digest-content {{
-                padding: 20px 16px;
-            }}
-
-            .digest-title {{
-                font-size: 16px;
-            }}
-
-            .footer-inner {{
-                flex-direction: column;
-                gap: 16px;
-                text-align: center;
-            }}
-
-            .header-right {{
-                gap: 8px;
-            }}
-
-            .date-badge {{
-                display: none;
+            .archive-grid {{
+                grid-template-columns: 1fr;
             }}
         }}
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="header-inner">
-                <div class="logo">
-                    <div class="logo-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                        </svg>
-                    </div>
-                    <span>每日科技简报</span>
-                </div>
-                <div class="header-right">
-                    <span class="date-badge">{now}</span>
-                    <a href="https://github.com/biyan113/cron" class="github-link">
-                        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor">
-                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-                        </svg>
-                        GitHub
-                    </a>
+    <div class="shell">
+        <header class="topbar">
+            <a class="brand" href="./index.html">
+                <span class="brand-mark">¥</span>
+                <span>每日财经简报</span>
+            </a>
+            <div class="top-actions">
+                <span>更新于 {html.escape(now)}</span>
+                <a class="button" href="digests/index.html">历史归档</a>
+                <a class="button" href="{REPO_URL}">GitHub</a>
+            </div>
+        </header>
+
+        <section class="hero">
+            <div class="hero-main">
+                <p class="eyebrow">Daily Finance Briefing</p>
+                <h1>{latest_title}</h1>
+                <p class="lede">{latest_lede}</p>
+                <div class="meta-row">
+                    <span class="pill">日期 {latest_date}</span>
+                    <span class="pill">约 {latest_words} 字</span>
+                    <span class="pill">微信同步推送</span>
                 </div>
             </div>
-        </div>
-    </header>
+            <aside class="metric-panel">
+                <div class="metric"><span>归档简报</span><strong>{len(files)}</strong></div>
+                <div class="metric"><span>最近更新</span><strong>{latest_date}</strong></div>
+                <div class="metric"><span>运行方式</span><strong>GitHub Actions</strong></div>
+            </aside>
+        </section>
 
-    <main>
-        <div class="container">
-            {digests_section}
-        </div>
-    </main>
+        {latest_sections}
 
-    <footer>
-        <div class="container">
-            <div class="footer-inner">
-                <div class="footer-text">&copy; 2026 每日科技简报 · 由 Claude AI 自动生成</div>
-                <div class="footer-links">
-                    <a href="https://github.com/biyan113/cron" class="footer-link">GitHub</a>
-                    <a href="https://github.com/biyan113/cron" class="footer-link">V2EX</a>
-                    <a href="https://github.com/biyan113/cron" class="footer-link">Hacker News</a>
-                </div>
+        <article class="article">
+            {latest_content}
+        </article>
+
+        <section class="archive">
+            <div class="section-title">
+                <h2>最近归档</h2>
+                <a class="button" href="digests/index.html">查看全部</a>
             </div>
-        </div>
-    </footer>
+            <div class="archive-grid">
+                {archive_html}
+            </div>
+        </section>
+
+        <footer>
+            由 Claude/GLM + GitHub Actions 自动生成。内容仅供参考，不构成投资建议。
+        </footer>
+    </div>
 </body>
 </html>
 """
 
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(html)
-
+    output_path.write_text(html_content, encoding="utf-8")
     print(f"[完成] 已生成: {output_path}")
 
 
 def main():
-    """主函数"""
     print("=" * 50)
-    print("GitHub Pages 生成器")
+    print("GitHub Pages 首页生成器")
     print("=" * 50)
 
     config = load_config()
     digests_dir = PROJECT_ROOT / config["output"]["digests_dir"]
-
-    print(f"\n扫描目录: {digests_dir}")
-
     files = get_digest_files(digests_dir)
+
+    print(f"扫描目录: {digests_dir}")
     print(f"找到 {len(files)} 份简报")
 
-    # 生成到根目录，用于 GitHub Pages
-    output_path = PROJECT_ROOT / "index.html"
-    generate_page(files, output_path)
-
-    print("\n" + "=" * 50)
-    print("生成完成!")
-    print("=" * 50)
+    generate_page(files, PROJECT_ROOT / "index.html")
 
 
 if __name__ == "__main__":

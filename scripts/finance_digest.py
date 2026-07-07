@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 每日财经简报生成器
-整合全球财经媒体 RSS 源，使用 Claude AI 生成简报
+整合全球财经媒体 RSS 源，使用 OpenAI 或 Claude/GLM 生成简报
 """
 
 import json
@@ -11,7 +11,6 @@ from datetime import datetime
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-import anthropic
 import feedparser
 import pytz
 import requests
@@ -66,8 +65,8 @@ def fetch_rss_feeds(config: dict) -> list[dict]:
     return result
 
 
-def prepare_content_for_claude(rss: list) -> str:
-    """准备发送给 Claude 的内容"""
+def prepare_content_for_ai(rss: list) -> str:
+    """准备发送给 AI 的内容"""
     sections = []
 
     # RSS 部分 - 按分类分组
@@ -88,30 +87,17 @@ def prepare_content_for_claude(rss: list) -> str:
     return "\n\n".join(sections)
 
 
-def get_api_key() -> str:
-    """获取API Key,兼容多种环境变量名称"""
-    # 优先使用新的 AUTH_TOKEN,其次使用旧的 API_KEY
+def get_anthropic_api_key() -> str:
+    """获取 Anthropic/智谱兼容 API Key, 兼容多种环境变量名称"""
     api_key = os.environ.get("ANTHROPIC_AUTH_TOKEN") or os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         raise ValueError("请设置 ANTHROPIC_AUTH_TOKEN 或 ANTHROPIC_API_KEY 环境变量")
     return api_key
 
 
-def generate_digest_with_claude(content: str, config: dict, today: str) -> str:
-    """使用 Claude/GLM 生成财经简报"""
-    # API 配置
-    api_key = get_api_key()
-
-    base_url = os.environ.get("ANTHROPIC_BASE_URL")
-
-    # 如果设置了 base_url，则使用兼容 API（如智谱 BigModel）
-    if base_url:
-        client = anthropic.Anthropic(api_key=api_key, base_url=base_url)
-    else:
-        client = anthropic.Anthropic(api_key=api_key)
-
-    # 财经简报专属 Prompt
-    prompt = f"""你是一位资深财经编辑，需要根据以下原始内容生成一份精炼的中文财经简报。
+def build_digest_prompt(content: str, today: str) -> str:
+    """财经简报专属 Prompt"""
+    return f"""你是一位资深财经编辑，需要根据以下原始内容生成一份精炼的中文财经简报。
 
 今天日期: {today}
 
@@ -203,6 +189,20 @@ def generate_digest_with_claude(content: str, config: dict, today: str) -> str:
 
 直接输出简报内容，不需要额外说明。"""
 
+
+def generate_digest_with_anthropic(content: str, config: dict, today: str) -> str:
+    """使用 Claude/GLM 生成财经简报"""
+    import anthropic
+
+    api_key = get_anthropic_api_key()
+    base_url = os.environ.get("ANTHROPIC_BASE_URL")
+    client = (
+        anthropic.Anthropic(api_key=api_key, base_url=base_url)
+        if base_url
+        else anthropic.Anthropic(api_key=api_key)
+    )
+    prompt = build_digest_prompt(content, today)
+
     message = client.messages.create(
         model=config["claude"]["model"],
         max_tokens=config["claude"]["max_tokens"],
@@ -213,6 +213,78 @@ def generate_digest_with_claude(content: str, config: dict, today: str) -> str:
     )
 
     return message.content[0].text
+
+
+def extract_openai_text(payload: dict) -> str:
+    """兼容 Responses API 的文本提取。"""
+    if payload.get("output_text"):
+        return payload["output_text"]
+
+    chunks = []
+    for item in payload.get("output", []):
+        for content in item.get("content", []):
+            if content.get("type") in {"output_text", "text"} and content.get("text"):
+                chunks.append(content["text"])
+
+    return "\n".join(chunks).strip()
+
+
+def generate_digest_with_openai(content: str, config: dict, today: str) -> str:
+    """使用 OpenAI Responses API 生成财经简报。"""
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        raise ValueError("请设置 OPENAI_API_KEY 环境变量")
+
+    openai_config = config.get("openai", {})
+    model = os.environ.get("OPENAI_MODEL") or openai_config.get("model", "gpt-4.1-mini")
+    max_tokens = int(openai_config.get("max_output_tokens", config["claude"]["max_tokens"]))
+    temperature = float(openai_config.get("temperature", config["claude"].get("temperature", 0.3)))
+    prompt = build_digest_prompt(content, today)
+
+    response = requests.post(
+        "https://api.openai.com/v1/responses",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": model,
+            "max_output_tokens": max_tokens,
+            "temperature": temperature,
+            "input": [
+                {
+                    "role": "developer",
+                    "content": "你是资深财经编辑。请严格按用户要求输出中文 Markdown 财经简报。",
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+        },
+        timeout=120,
+    )
+
+    payload = response.json()
+    if not response.ok:
+        message = payload.get("error", {}).get("message", "OpenAI API 请求失败")
+        raise RuntimeError(message)
+
+    text = extract_openai_text(payload)
+    if not text:
+        raise RuntimeError("OpenAI API 没有返回可用文本")
+
+    print(f"[信息] 已使用 OpenAI 模型生成: {model}")
+    return text
+
+
+def generate_digest(content: str, config: dict, today: str) -> str:
+    """优先使用 OpenAI；未配置时回退到 Claude/GLM 兼容接口。"""
+    if os.environ.get("OPENAI_API_KEY"):
+        return generate_digest_with_openai(content, config, today)
+
+    print("[信息] 未检测到 OPENAI_API_KEY，回退到 Anthropic/GLM 兼容接口")
+    return generate_digest_with_anthropic(content, config, today)
 
 
 def save_digest(content: str, config: dict, today: str):
@@ -258,11 +330,11 @@ def main():
         sys.exit(1)
 
     # 准备内容
-    raw_content = prepare_content_for_claude(rss)
+    raw_content = prepare_content_for_ai(rss)
 
     # 生成简报
     print("[2/3] 正在使用 AI 生成财经简报...")
-    digest = generate_digest_with_claude(raw_content, config, today)
+    digest = generate_digest(raw_content, config, today)
 
     # 保存
     print("[3/3] 正在保存简报...")

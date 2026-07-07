@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-HTML 索引页生成器
-为简报归档生成一个美观的 HTML 索引页面
+HTML 归档页生成器。
 """
 
+import html
 import json
 import re
 from datetime import datetime
@@ -12,242 +12,263 @@ from pathlib import Path
 import pytz
 
 
-# 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
 CONFIG_PATH = Path(__file__).parent / "config.json"
 
 
 def load_config() -> dict:
-    """加载配置文件"""
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
+def plain_text(markdown_text: str) -> str:
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", markdown_text)
+    text = re.sub(r"[#>*_`~-]", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
 def get_digest_files(digests_dir: Path) -> list[dict]:
-    """获取所有简报文件信息"""
     files = []
     pattern = re.compile(r"^\d{4}-\d{2}-\d{2}\.md$")
 
     for file in digests_dir.glob("*.md"):
-        if pattern.match(file.name):
-            date_str = file.stem
-            with open(file, "r", encoding="utf-8") as f:
-                content = f.read()
-                # 提取第一行作为标题
-                first_line = content.split("\n")[0].strip("# ").strip()
+        if not pattern.match(file.name):
+            continue
 
-            files.append({
-                "date": date_str,
+        content = file.read_text(encoding="utf-8")
+        title_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
+        quote_match = re.search(r"^>\s*(.+)$", content, re.MULTILINE)
+        title = title_match.group(1).strip() if title_match else f"{file.stem} 财经简报"
+        summary = quote_match.group(1).strip() if quote_match else plain_text(content)[:150]
+
+        files.append(
+            {
+                "date": file.stem,
                 "filename": file.name,
-                "title": first_line or f"{date_str} 科技简报",
-                "size": len(content)
-            })
+                "title": title,
+                "summary": summary[:170] + ("..." if len(summary) > 170 else ""),
+                "size": len(content),
+            }
+        )
 
-    # 按日期倒序排列
     files.sort(key=lambda x: x["date"], reverse=True)
     return files
 
 
 def generate_html(files: list[dict], output_path: Path):
-    """生成 HTML 索引页"""
     tz = pytz.timezone("Asia/Shanghai")
     now = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
 
-    html = f"""<!DOCTYPE html>
+    items = []
+    for item in files:
+        items.append(
+            f"""
+            <a class="digest-item" href="{html.escape(item['filename'])}">
+                <div>
+                    <span class="digest-date">{html.escape(item['date'])}</span>
+                    <h2>{html.escape(item['title'])}</h2>
+                    <p>{html.escape(item['summary'])}</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            """
+        )
+
+    list_html = "\n".join(items) if items else '<p class="empty">暂无简报</p>'
+
+    page = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日科技简报归档</title>
+    <title>每日财经简报归档</title>
     <style>
         :root {{
-            --bg-color: #f5f5f5;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --accent-color: #2563eb;
-            --border-color: #e5e5e5;
-        }}
-
-        @media (prefers-color-scheme: dark) {{
-            :root {{
-                --bg-color: #1a1a1a;
-                --card-bg: #2d2d2d;
-                --text-color: #e5e5e5;
-                --accent-color: #60a5fa;
-                --border-color: #404040;
-            }}
+            --bg: #f7f4ed;
+            --surface: #fffdf8;
+            --ink: #201f1b;
+            --muted: #6e6a60;
+            --line: #ddd5c7;
+            --accent: #0f766e;
+            --accent-strong: #134e4a;
+            --shadow: 0 14px 34px rgba(39, 35, 26, 0.08);
         }}
 
         * {{
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }}
 
         body {{
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            padding: 2rem;
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", Arial, sans-serif;
+            line-height: 1.65;
+        }}
+
+        a {{
+            color: inherit;
+            text-decoration: none;
         }}
 
         .container {{
-            max-width: 800px;
+            max-width: 980px;
             margin: 0 auto;
+            padding: 36px 20px 56px;
         }}
 
         header {{
-            text-align: center;
-            margin-bottom: 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 18px;
+            margin-bottom: 24px;
+        }}
+
+        .eyebrow {{
+            margin: 0 0 8px;
+            color: var(--accent-strong);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }}
 
         h1 {{
-            font-size: 2rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
+            margin: 0;
+            font-size: clamp(32px, 7vw, 56px);
+            line-height: 1.05;
+            letter-spacing: 0;
         }}
 
         .subtitle {{
-            color: #666;
-            font-size: 0.9rem;
+            margin: 10px 0 0;
+            color: var(--muted);
+        }}
+
+        .home-link,
+        .read-link {{
+            display: inline-flex;
+            align-items: center;
+            min-height: 38px;
+            padding: 0 14px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--accent-strong);
+            font-weight: 800;
         }}
 
         .digest-list {{
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+            display: grid;
+            gap: 14px;
         }}
 
         .digest-item {{
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1.25rem;
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 18px;
             align-items: center;
-            transition: box-shadow 0.2s;
+            padding: 20px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            transition: transform 0.18s ease, border-color 0.18s ease;
         }}
 
         .digest-item:hover {{
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }}
-
-        .digest-info {{
-            flex: 1;
+            transform: translateY(-2px);
+            border-color: var(--accent);
         }}
 
         .digest-date {{
-            font-size: 0.85rem;
-            color: var(--accent-color);
-            font-weight: 500;
-            margin-bottom: 0.25rem;
+            color: var(--accent);
+            font-weight: 800;
+            font-size: 13px;
         }}
 
-        .digest-title {{
-            font-size: 1.1rem;
-            font-weight: 500;
+        .digest-item h2 {{
+            margin: 6px 0 8px;
+            font-size: 20px;
+            line-height: 1.35;
         }}
 
-        .digest-link {{
-            background: var(--accent-color);
-            color: white;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            transition: opacity 0.2s;
-        }}
-
-        .digest-link:hover {{
-            opacity: 0.9;
+        .digest-item p {{
+            margin: 0;
+            color: var(--muted);
         }}
 
         .empty {{
-            text-align: center;
-            padding: 3rem;
-            color: #666;
+            padding: 32px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--muted);
         }}
 
         footer {{
-            text-align: center;
-            margin-top: 3rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border-color);
-            font-size: 0.85rem;
-            color: #666;
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 13px;
         }}
 
-        footer a {{
-            color: var(--accent-color);
-            text-decoration: none;
+        @media (max-width: 720px) {{
+            header,
+            .digest-item {{
+                display: block;
+            }}
+
+            .home-link,
+            .read-link {{
+                margin-top: 14px;
+            }}
         }}
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>每日科技简报</h1>
-            <p class="subtitle">整合 V2EX、Hacker News、科技媒体的每日精选</p>
+            <div>
+                <p class="eyebrow">Archive</p>
+                <h1>每日财经简报归档</h1>
+                <p class="subtitle">按日期保存的市场热点、宏观政策、行业观察与投资洞察。</p>
+            </div>
+            <a class="home-link" href="../index.html">返回首页</a>
         </header>
 
-        <div class="digest-list">
-"""
-
-    if files:
-        for item in files:
-            html += f"""            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">{item['date']}</div>
-                    <div class="digest-title">{item['title']}</div>
-                </div>
-                <a href="{item['filename']}" class="digest-link">阅读</a>
-            </div>
-"""
-    else:
-        html += """            <div class="empty">
-                <p>暂无简报</p>
-            </div>
-"""
-
-    html += f"""        </div>
+        <main class="digest-list">
+            {list_html}
+        </main>
 
         <footer>
-            <p>最后更新: {now}</p>
-            <p>由 Claude AI 驱动 · <a href="https://github.com">GitHub</a></p>
+            共 {len(files)} 份简报 · 最后更新 {html.escape(now)} · 内容仅供参考，不构成投资建议。
         </footer>
     </div>
 </body>
 </html>
 """
 
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(html)
-
+    output_path.write_text(page, encoding="utf-8")
     print(f"[完成] 已生成: {output_path}")
 
 
 def main():
-    """主函数"""
     print("=" * 50)
-    print("HTML 索引页生成器")
+    print("HTML 归档页生成器")
     print("=" * 50)
 
     config = load_config()
     digests_dir = PROJECT_ROOT / config["output"]["digests_dir"]
-
-    print(f"\n扫描目录: {digests_dir}")
-
     files = get_digest_files(digests_dir)
+
+    print(f"扫描目录: {digests_dir}")
     print(f"找到 {len(files)} 份简报")
 
-    output_path = digests_dir / "index.html"
-    generate_html(files, output_path)
-
-    print("\n" + "=" * 50)
-    print("生成完成!")
-    print("=" * 50)
+    generate_html(files, digests_dir / "index.html")
 
 
 if __name__ == "__main__":

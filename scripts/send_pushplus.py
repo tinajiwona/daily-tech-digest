@@ -1,177 +1,230 @@
 #!/usr/bin/env python3
 """
-PushPlus 微信推送通知
-将每日简报推送到微信
+PushPlus 微信推送通知。
 """
 
+import html
 import os
-import sys
-import requests
-from datetime import datetime
-import pytz
 import re
+import sys
+from datetime import datetime
+
+import pytz
+
+
+SECTION_COLORS = {
+    "今日热点": "#dc2626",
+    "市场动态": "#0f766e",
+    "宏观与政策": "#7c3aed",
+    "行业观察": "#2563eb",
+    "国际视野": "#b45309",
+    "投资洞察": "#134e4a",
+    "选题灵感": "#be123c",
+    "延伸阅读": "#4b5563",
+}
+
+
+def normalize_section_name(text: str) -> str:
+    return re.sub(r"[^\u4e00-\u9fa5A-Za-z0-9]", "", text)
+
+
+def get_repo_links() -> dict:
+    repo = os.environ.get("GITHUB_REPOSITORY", "tinajiwona/daily-tech-digest")
+    run_id = os.environ.get("GITHUB_RUN_ID")
+    base = f"https://github.com/{repo}"
+    pages = f"https://{repo.split('/')[0]}.github.io/{repo.split('/')[1]}"
+    return {
+        "pages": pages,
+        "latest": f"{pages}/digests/latest.md",
+        "archive": f"{pages}/digests/",
+        "repo": base,
+        "run": f"{base}/actions/runs/{run_id}" if run_id else f"{base}/actions",
+    }
+
+
+def extract_digest_intro(markdown_text: str) -> str:
+    quote = re.search(r"^>\s*(.+)$", markdown_text, re.MULTILINE)
+    if quote:
+        return quote.group(1).strip()
+
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", markdown_text)
+    text = re.sub(r"[#>*_`~-]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text[:180] + ("..." if len(text) > 180 else "")
+
+
+def extract_section_titles(markdown_text: str) -> list[str]:
+    return [item.strip() for item in re.findall(r"^##\s+(.+)$", markdown_text, re.MULTILINE)]
+
+
+def inline_markdown(text: str) -> str:
+    safe = html.escape(text)
+    safe = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", safe)
+    safe = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', safe)
+    return safe
 
 
 def format_markdown_to_html(markdown_text: str) -> str:
-    """
-    将Markdown格式转换为美观的HTML格式
-
-    Args:
-        markdown_text: Markdown格式的文本
-
-    Returns:
-        HTML格式的文本
-    """
-    lines = markdown_text.split('\n')
+    lines = markdown_text.splitlines()
     html_lines = []
     in_list = False
 
-    for line in lines:
-        # 跳过空行
-        if not line.strip():
+    for raw_line in lines:
+        line = raw_line.strip()
+
+        if not line:
             if in_list:
-                html_lines.append('</ul>')
+                html_lines.append("</ul>")
                 in_list = False
-            html_lines.append('<br>')
             continue
 
-        # 处理标题（# ## ### 等）
-        if line.startswith('#'):
+        if re.match(r"^#{1,4}\s+", line):
             if in_list:
-                html_lines.append('</ul>')
+                html_lines.append("</ul>")
                 in_list = False
-            level = len(re.match(r'^#+', line).group())
-            text = line.lstrip('#').strip()
+
+            level = len(re.match(r"^#+", line).group())
+            text = line.lstrip("#").strip()
+            section_key = normalize_section_name(text)
+            color = next(
+                (value for key, value in SECTION_COLORS.items() if normalize_section_name(key) in section_key),
+                "#134e4a",
+            )
+
             if level == 1:
-                html_lines.append(f'<h1 style="color: #2563eb; font-size: 24px; font-weight: bold; margin: 20px 0 10px;">{text}</h1>')
-            elif level == 2:
-                html_lines.append(f'<h2 style="color: #1e40af; font-size: 20px; font-weight: bold; margin: 18px 0 8px;">{text}</h2>')
-            elif level == 3:
-                html_lines.append(f'<h3 style="color: #1e3a8a; font-size: 18px; font-weight: bold; margin: 15px 0 6px;">{text}</h3>')
+                html_lines.append(
+                    f'<h1 style="font-size:22px;line-height:1.35;margin:18px 0 12px;color:#111827;">{inline_markdown(text)}</h1>'
+                )
             else:
-                html_lines.append(f'<h4 style="font-size: 16px; font-weight: bold; margin: 12px 0 5px;">{text}</h4>')
+                html_lines.append(
+                    f'<h2 style="font-size:18px;line-height:1.35;margin:22px 0 10px;padding:9px 11px;border-left:4px solid {color};background:#f8fafc;color:#111827;">{inline_markdown(text)}</h2>'
+                )
+            continue
 
-        # 处理列表项（- 或 * 开头）
-        elif line.strip().startswith('- ') or line.strip().startswith('* '):
-            if not in_list:
-                html_lines.append('<ul style="margin: 10px 0; padding-left: 20px;">')
-                in_list = True
-            text = line.strip().lstrip('-*').strip()
-            # 处理加粗
-            text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
-            # 移除链接但保留文本
-            text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
-            html_lines.append(f'<li style="margin: 8px 0; line-height: 1.6;">{text}</li>')
-
-        # 处理普通段落
-        else:
+        if line.startswith(("> ", "〉")):
             if in_list:
-                html_lines.append('</ul>')
+                html_lines.append("</ul>")
                 in_list = False
+            text = line.lstrip(">〉 ").strip()
+            html_lines.append(
+                f'<blockquote style="margin:12px 0;padding:12px 14px;border-left:4px solid #0f766e;background:#ecfdf5;color:#134e4a;line-height:1.75;">{inline_markdown(text)}</blockquote>'
+            )
+            continue
 
-            text = line.strip()
-            # 处理加粗
-            text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
-            # 移除链接但保留文本
-            text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
-            # 处理分隔线
-            if text.strip() == '---':
-                html_lines.append('<hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">')
-            else:
-                html_lines.append(f'<p style="margin: 10px 0; line-height: 1.8;">{text}</p>')
+        if line in {"---", "***"}:
+            if in_list:
+                html_lines.append("</ul>")
+                in_list = False
+            html_lines.append('<hr style="border:none;border-top:1px solid #e5e7eb;margin:18px 0;">')
+            continue
+
+        if line.startswith(("- ", "* ")) or re.match(r"^\d+\.\s+", line):
+            if not in_list:
+                html_lines.append('<ul style="margin:8px 0 14px;padding-left:18px;">')
+                in_list = True
+            text = re.sub(r"^(-|\*|\d+\.)\s+", "", line)
+            html_lines.append(f'<li style="margin:7px 0;line-height:1.75;">{inline_markdown(text)}</li>')
+            continue
+
+        if in_list:
+            html_lines.append("</ul>")
+            in_list = False
+
+        html_lines.append(f'<p style="margin:9px 0;line-height:1.8;">{inline_markdown(line)}</p>')
 
     if in_list:
-        html_lines.append('</ul>')
+        html_lines.append("</ul>")
 
-    return '\n'.join(html_lines)
+    return "\n".join(html_lines)
 
 
-def send_pushplus_notification(token: str, title: str, content: str):
-    """
-    发送 PushPlus 通知（完整内容版）
+def build_push_content(markdown_text: str) -> str:
+    tz = pytz.timezone("Asia/Shanghai")
+    generated_at = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    links = get_repo_links()
+    intro = html.escape(extract_digest_intro(markdown_text))
+    sections = extract_section_titles(markdown_text)
+    section_badges = "".join(
+        f'<span style="display:inline-block;margin:4px 4px 0 0;padding:4px 8px;border-radius:6px;background:#f1f5f9;color:#334155;font-size:12px;">{html.escape(section)}</span>'
+        for section in sections[:8]
+    )
+    body = format_markdown_to_html(markdown_text)
 
-    Args:
-        token: PushPlus Token
-        title: 消息标题
-        content: 完整的简报内容（Markdown格式）
-    """
-    # 将Markdown转换为美观的HTML
-    html_content = format_markdown_to_html(content)
+    return f"""
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans SC',Arial,sans-serif;color:#1f2937;background:#ffffff;line-height:1.75;">
+  <div style="padding:16px 16px 14px;border:1px solid #e5e7eb;border-radius:10px;background:#fffbeb;margin-bottom:16px;">
+    <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:6px;">每日财经简报</div>
+    <div style="font-size:15px;color:#374151;">{intro}</div>
+    <div style="margin-top:10px;">{section_badges}</div>
+  </div>
 
-    # 构建完整消息（精美排版）
-    full_content = f"""
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.8; color: #333;">
-{html_content}
+  {body}
 
-<hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
+  <div style="margin-top:22px;padding:14px;border-radius:10px;background:#f8fafc;border:1px solid #e5e7eb;">
+    <p style="margin:0 0 8px;font-weight:700;color:#111827;">快速入口</p>
+    <p style="margin:6px 0;"><a href="{links['latest']}">查看最新简报</a></p>
+    <p style="margin:6px 0;"><a href="{links['archive']}">打开历史归档</a></p>
+    <p style="margin:6px 0;"><a href="{links['run']}">查看本次 Actions 运行</a></p>
+  </div>
 
-<p style="text-align: center; color: #999; font-size: 12px; line-height: 1.6;">
-  🤖 由 Claude AI + 智谱 GLM-4.7 自动生成<br>
-  ⏰ 生成时间: {datetime.now(pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S')}
-</p>
+  <p style="text-align:center;color:#9ca3af;font-size:12px;line-height:1.6;margin:18px 0 0;">
+    由 Claude/GLM + GitHub Actions 自动生成<br>
+    生成时间: {generated_at}<br>
+    本简报仅供参考，不构成投资建议。
+  </p>
 </div>
 """
 
-    # PushPlus API
-    url = f"http://www.pushplus.plus/send/{token}"
 
+def send_pushplus_notification(token: str, title: str, content: str) -> bool:
+    import requests
+
+    url = f"http://www.pushplus.plus/send/{token}"
     payload = {
         "title": title,
-        "content": full_content,
-        "template": "html"  # 使用 HTML 模板支持链接
+        "content": build_push_content(content),
+        "template": "html",
     }
 
     try:
-        response = requests.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, timeout=15)
         response.raise_for_status()
         result = response.json()
 
         if result.get("code") == 200:
-            print(f"[成功] 微信推送已发送")
+            print("[成功] 微信推送已发送")
             return True
-        else:
-            print(f"[失败] {result.get('msg', '未知错误')}")
-            return False
 
-    except Exception as e:
-        print(f"[错误] 推送失败: {e}")
+        print(f"[失败] {result.get('msg', '未知错误')}")
+        return False
+    except Exception as exc:
+        print(f"[错误] 推送失败: {exc}")
         return False
 
 
 def main():
-    """主函数"""
-    # 从环境变量获取配置
     token = os.environ.get("PUSHPLUS_TOKEN")
     if not token:
         print("[错误] 请设置 PUSHPLUS_TOKEN 环境变量")
         sys.exit(1)
 
-    # 读取最新的简报内容（完整版）
     digest_file = os.environ.get("DIGEST_FILE", "digests/latest.md")
 
     try:
         with open(digest_file, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # 构建标题
         tz = pytz.timezone("Asia/Shanghai")
         today = datetime.now(tz).strftime("%Y-%m-%d")
-        title = f"💰 每日财经简报 {today}"
-
-        # 发送完整简报通知
-        success = send_pushplus_notification(
-            token=token,
-            title=title,
-            content=content
-        )
+        title = f"每日财经简报 {today}"
+        success = send_pushplus_notification(token=token, title=title, content=content)
 
         sys.exit(0 if success else 1)
-
     except FileNotFoundError:
         print(f"[错误] 找不到简报文件: {digest_file}")
         sys.exit(1)
-    except Exception as e:
-        print(f"[错误] {e}")
+    except Exception as exc:
+        print(f"[错误] {exc}")
         sys.exit(1)
 
 

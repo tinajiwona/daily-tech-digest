@@ -2,13 +2,13 @@
 
 ## 📖 项目简介
 
-这是一个基于 Claude Agent Skills 和 GitHub Actions 的自动化财经简报生成系统。它会每天定时抓取全球顶级财经媒体的热点内容，通过 AI 分析整理成结构化简报，并自动发布到 GitHub Pages 和微信推送。
+这是一个基于 OpenAI、GitHub Actions 和 PushPlus 的自动化财经简报生成系统。它会每天定时抓取全球顶级财经媒体的热点内容，通过 AI 分析整理成结构化简报，并自动发布到 GitHub Pages 和微信推送。
 
 ### ✨ 核心特性
 
 - ⏰ **全自动定时任务** - 每天自动运行，无需人工干预
 - 🌐 **多源数据抓取** - 华尔街见闻、财新网、FT中文网、Bloomberg、路透社、CNBC 等
-- 🤖 **AI 智能分析** - 使用智谱 GLM-4-Plus 模型自动筛选热点、提炼趋势
+- 🤖 **AI 智能分析** - 优先使用 OpenAI API 自动筛选热点、提炼趋势
 - 💰 **零成本运行** - GitHub Actions 个人使用完全免费
 - 📱 **自动发布** - 生成 Markdown 和 HTML，支持 GitHub Pages 托管
 - 💬 **微信推送** - 集成 PushPlus 自动推送到微信
@@ -42,11 +42,17 @@
 
 2. **添加以下 Secrets**:
    ```
-   Name: ANTHROPIC_API_KEY
-   Value: 你的智谱AI API Key
+   Name: OPENAI_API_KEY
+   Value: 你的 OpenAI API Key
 
    Name: PUSHPLUS_TOKEN (可选)
    Value: 你的 PushPlus Token
+   ```
+
+   可选：如果想调整 OpenAI 模型，可以在 `Settings` > `Secrets and variables` > `Actions` > `Variables` 里添加：
+   ```
+   Name: OPENAI_MODEL
+   Value: gpt-4.1-mini
    ```
 
 ### 步骤 3: 验证 GitHub Actions 配置
@@ -134,11 +140,10 @@ https://你的用户名.github.io/仓库名/digests/
 - ✅ **公共仓库**：完全免费
 - 本次任务每次运行约 2-3 分钟
 
-### 智谱 AI API
-- GLM-4-Plus 模型经济实惠
-- 每次生成简报约消耗 3000-5000 tokens
-- 智谱新用户通常有免费额度
-- 即使付费，成本极低（¥0.05/次以内）
+### OpenAI API
+- 默认模型可通过 `OPENAI_MODEL` 变量调整
+- 每次生成简报约消耗 3000-5000 tokens，具体费用取决于所选模型
+- 脚本仍保留 Anthropic/智谱兼容接口兜底，但 GitHub Actions 默认走 OpenAI
 
 ---
 
@@ -147,6 +152,7 @@ https://你的用户名.github.io/仓库名/digests/
 - `digests/YYYY-MM-DD.md` - 按日期归档的简报
 - `digests/latest.md` - 最新简报
 - `digests/index.html` - HTML 索引页面
+- `index.html` - GitHub Pages 首页，展示最新简报和最近归档
 
 简报内容结构：
 - 🔥 今日热点

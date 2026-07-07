@@ -3,741 +3,1019 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日科技简报归档</title>
+    <title>每日财经简报归档</title>
     <style>
         :root {
-            --bg-color: #f5f5f5;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --accent-color: #2563eb;
-            --border-color: #e5e5e5;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-color: #1a1a1a;
-                --card-bg: #2d2d2d;
-                --text-color: #e5e5e5;
-                --accent-color: #60a5fa;
-                --border-color: #404040;
-            }
+            --bg: #f7f4ed;
+            --surface: #fffdf8;
+            --ink: #201f1b;
+            --muted: #6e6a60;
+            --line: #ddd5c7;
+            --accent: #0f766e;
+            --accent-strong: #134e4a;
+            --shadow: 0 14px 34px rgba(39, 35, 26, 0.08);
         }
 
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            padding: 2rem;
+            margin: 0;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", Arial, sans-serif;
+            line-height: 1.65;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 980px;
             margin: 0 auto;
+            padding: 36px 20px 56px;
         }
 
         header {
-            text-align: center;
-            margin-bottom: 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+
+        .eyebrow {
+            margin: 0 0 8px;
+            color: var(--accent-strong);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }
 
         h1 {
-            font-size: 2rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
+            margin: 0;
+            font-size: clamp(32px, 7vw, 56px);
+            line-height: 1.05;
+            letter-spacing: 0;
         }
 
         .subtitle {
-            color: #666;
-            font-size: 0.9rem;
+            margin: 10px 0 0;
+            color: var(--muted);
+        }
+
+        .home-link,
+        .read-link {
+            display: inline-flex;
+            align-items: center;
+            min-height: 38px;
+            padding: 0 14px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--accent-strong);
+            font-weight: 800;
         }
 
         .digest-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+            display: grid;
+            gap: 14px;
         }
 
         .digest-item {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1.25rem;
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 18px;
             align-items: center;
-            transition: box-shadow 0.2s;
+            padding: 20px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            transition: transform 0.18s ease, border-color 0.18s ease;
         }
 
         .digest-item:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .digest-info {
-            flex: 1;
+            transform: translateY(-2px);
+            border-color: var(--accent);
         }
 
         .digest-date {
-            font-size: 0.85rem;
-            color: var(--accent-color);
-            font-weight: 500;
-            margin-bottom: 0.25rem;
+            color: var(--accent);
+            font-weight: 800;
+            font-size: 13px;
         }
 
-        .digest-title {
-            font-size: 1.1rem;
-            font-weight: 500;
+        .digest-item h2 {
+            margin: 6px 0 8px;
+            font-size: 20px;
+            line-height: 1.35;
         }
 
-        .digest-link {
-            background: var(--accent-color);
-            color: white;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            transition: opacity 0.2s;
-        }
-
-        .digest-link:hover {
-            opacity: 0.9;
+        .digest-item p {
+            margin: 0;
+            color: var(--muted);
         }
 
         .empty {
-            text-align: center;
-            padding: 3rem;
-            color: #666;
+            padding: 32px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--muted);
         }
 
         footer {
-            text-align: center;
-            margin-top: 3rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border-color);
-            font-size: 0.85rem;
-            color: #666;
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 13px;
         }
 
-        footer a {
-            color: var(--accent-color);
-            text-decoration: none;
+        @media (max-width: 720px) {
+            header,
+            .digest-item {
+                display: block;
+            }
+
+            .home-link,
+            .read-link {
+                margin-top: 14px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>每日科技简报</h1>
-            <p class="subtitle">整合 V2EX、Hacker News、科技媒体的每日精选</p>
+            <div>
+                <p class="eyebrow">Archive</p>
+                <h1>每日财经简报归档</h1>
+                <p class="subtitle">按日期保存的市场热点、宏观政策、行业观察与投资洞察。</p>
+            </div>
+            <a class="home-link" href="../index.html">返回首页</a>
         </header>
 
-        <div class="digest-list">
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-04-11</div>
-                    <div class="digest-title">财经简报 | 2026年4月11日</div>
-                </div>
-                <a href="2026-04-11.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-04-10</div>
-                    <div class="digest-title">2026年4月10日 财经简报</div>
-                </div>
-                <a href="2026-04-10.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-04-09</div>
-                    <div class="digest-title">财经简报 | 2026-04-09</div>
-                </div>
-                <a href="2026-04-09.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-04-08</div>
-                    <div class="digest-title">2026年4月8日 财经简报</div>
-                </div>
-                <a href="2026-04-08.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-04-07</div>
-                    <div class="digest-title">财经简报 | 2026-04-07</div>
-                </div>
-                <a href="2026-04-07.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-04-06</div>
-                    <div class="digest-title">财经简报 | 2026年4月6日</div>
-                </div>
-                <a href="2026-04-06.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-04-05</div>
-                    <div class="digest-title">财经简报 | 2026-04-05</div>
-                </div>
-                <a href="2026-04-05.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-04-04</div>
-                    <div class="digest-title">2026年4月4日 财经简报</div>
-                </div>
-                <a href="2026-04-04.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-04-03</div>
-                    <div class="digest-title">财经简报 | 2026年4月3日</div>
-                </div>
-                <a href="2026-04-03.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-04-02</div>
-                    <div class="digest-title">2026年4月2日 财经简报</div>
-                </div>
-                <a href="2026-04-02.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-04-01</div>
-                    <div class="digest-title">财经简报 | 2026年4月1日</div>
-                </div>
-                <a href="2026-04-01.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-31</div>
-                    <div class="digest-title">财经简报 | 2026年3月31日</div>
-                </div>
-                <a href="2026-03-31.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-30</div>
-                    <div class="digest-title">财经简报 | 2026-03-30</div>
-                </div>
-                <a href="2026-03-30.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-29</div>
-                    <div class="digest-title">2026年3月29日 财经简报</div>
-                </div>
-                <a href="2026-03-29.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-28</div>
-                    <div class="digest-title">财经简报 | 2026年3月28日</div>
-                </div>
-                <a href="2026-03-28.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-27</div>
-                    <div class="digest-title">财经简报 | 2026-03-27</div>
-                </div>
-                <a href="2026-03-27.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-26</div>
-                    <div class="digest-title">财经简报 | 2026年3月26日</div>
-                </div>
-                <a href="2026-03-26.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-25</div>
-                    <div class="digest-title">财经简报 | 2026-03-25</div>
-                </div>
-                <a href="2026-03-25.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-24</div>
-                    <div class="digest-title">财经简报 | 2026年3月24日</div>
-                </div>
-                <a href="2026-03-24.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-23</div>
-                    <div class="digest-title">2026年3月23日 财经简报</div>
-                </div>
-                <a href="2026-03-23.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-22</div>
-                    <div class="digest-title">财经简报 | 2026年3月22日</div>
-                </div>
-                <a href="2026-03-22.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-21</div>
-                    <div class="digest-title">财经简报 | 2026年3月21日</div>
-                </div>
-                <a href="2026-03-21.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-20</div>
-                    <div class="digest-title">财经简报 | 2026-03-20</div>
-                </div>
-                <a href="2026-03-20.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-19</div>
-                    <div class="digest-title">2026年3月19日 财经简报</div>
-                </div>
-                <a href="2026-03-19.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-18</div>
-                    <div class="digest-title">财经简报 | 2026年3月18日</div>
-                </div>
-                <a href="2026-03-18.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-17</div>
-                    <div class="digest-title">2026年3月17日 财经简报</div>
-                </div>
-                <a href="2026-03-17.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-16</div>
-                    <div class="digest-title">财经简报 | 2026-03-16</div>
-                </div>
-                <a href="2026-03-16.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-15</div>
-                    <div class="digest-title">财经简报 | 2026年3月15日</div>
-                </div>
-                <a href="2026-03-15.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-14</div>
-                    <div class="digest-title">财经简报 | 2026年3月14日</div>
-                </div>
-                <a href="2026-03-14.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-13</div>
-                    <div class="digest-title">2026年3月13日 财经简报</div>
-                </div>
-                <a href="2026-03-13.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-12</div>
-                    <div class="digest-title">财经简报 | 2026-03-12</div>
-                </div>
-                <a href="2026-03-12.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-11</div>
-                    <div class="digest-title">2026年3月11日 财经简报</div>
-                </div>
-                <a href="2026-03-11.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-10</div>
-                    <div class="digest-title">财经简报 | 2026年3月10日</div>
-                </div>
-                <a href="2026-03-10.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-09</div>
-                    <div class="digest-title">2026年3月9日 财经简报</div>
-                </div>
-                <a href="2026-03-09.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-08</div>
-                    <div class="digest-title">财经简报 | 2026年3月8日</div>
-                </div>
-                <a href="2026-03-08.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-07</div>
-                    <div class="digest-title">2026年3月7日 财经简报</div>
-                </div>
-                <a href="2026-03-07.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-06</div>
-                    <div class="digest-title">财经简报 | 2026年3月6日</div>
-                </div>
-                <a href="2026-03-06.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-05</div>
-                    <div class="digest-title">财经简报 | 2026年3月5日</div>
-                </div>
-                <a href="2026-03-05.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-04</div>
-                    <div class="digest-title">2026年3月4日 财经简报</div>
-                </div>
-                <a href="2026-03-04.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-03</div>
-                    <div class="digest-title">财经简报 | 2026-03-03</div>
-                </div>
-                <a href="2026-03-03.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-02</div>
-                    <div class="digest-title">财经简报 | 2026年3月2日</div>
-                </div>
-                <a href="2026-03-02.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-03-01</div>
-                    <div class="digest-title">财经简报 | 2026年3月1日</div>
-                </div>
-                <a href="2026-03-01.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-28</div>
-                    <div class="digest-title">财经简报 | 2026年2月28日</div>
-                </div>
-                <a href="2026-02-28.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-27</div>
-                    <div class="digest-title">2026年2月27日 财经简报</div>
-                </div>
-                <a href="2026-02-27.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-26</div>
-                    <div class="digest-title">财经简报 | 2026-02-26</div>
-                </div>
-                <a href="2026-02-26.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-25</div>
-                    <div class="digest-title">财经简报 | 2026-02-25</div>
-                </div>
-                <a href="2026-02-25.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-24</div>
-                    <div class="digest-title">财经简报 | 2026-02-24</div>
-                </div>
-                <a href="2026-02-24.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-23</div>
-                    <div class="digest-title">财经简报 | 2026年2月23日</div>
-                </div>
-                <a href="2026-02-23.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-22</div>
-                    <div class="digest-title">财经简报 | 2026年2月22日</div>
-                </div>
-                <a href="2026-02-22.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-21</div>
-                    <div class="digest-title">财经简报 | 2026年2月21日</div>
-                </div>
-                <a href="2026-02-21.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-20</div>
-                    <div class="digest-title">财经简报 | 2026年2月20日</div>
-                </div>
-                <a href="2026-02-20.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-19</div>
-                    <div class="digest-title">财经简报 | 2026年2月19日</div>
-                </div>
-                <a href="2026-02-19.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-18</div>
-                    <div class="digest-title">财经简报 | 2026-02-18</div>
-                </div>
-                <a href="2026-02-18.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-17</div>
-                    <div class="digest-title">财经简报 | 2026-02-17</div>
-                </div>
-                <a href="2026-02-17.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-16</div>
-                    <div class="digest-title">财经简报 | 2026-02-16</div>
-                </div>
-                <a href="2026-02-16.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-15</div>
-                    <div class="digest-title">财经简报 | 2026-02-15</div>
-                </div>
-                <a href="2026-02-15.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-14</div>
-                    <div class="digest-title">2026年2月14日 财经简报</div>
-                </div>
-                <a href="2026-02-14.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-13</div>
-                    <div class="digest-title">财经简报 | 2026-02-13</div>
-                </div>
-                <a href="2026-02-13.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-12</div>
-                    <div class="digest-title">2026年2月12日 财经简报</div>
-                </div>
-                <a href="2026-02-12.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-11</div>
-                    <div class="digest-title">2026年2月11日 财经简报</div>
-                </div>
-                <a href="2026-02-11.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-10</div>
-                    <div class="digest-title">2026年2月10日 财经简报</div>
-                </div>
-                <a href="2026-02-10.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-09</div>
-                    <div class="digest-title">2026年2月9日 财经简报</div>
-                </div>
-                <a href="2026-02-09.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-08</div>
-                    <div class="digest-title">财经简报 | 2026-02-08</div>
-                </div>
-                <a href="2026-02-08.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-07</div>
-                    <div class="digest-title">2026年2月7日 财经简报</div>
-                </div>
-                <a href="2026-02-07.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-06</div>
-                    <div class="digest-title">2026年2月6日 财经简报</div>
-                </div>
-                <a href="2026-02-06.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-05</div>
-                    <div class="digest-title">2026年2月5日 财经简报</div>
-                </div>
-                <a href="2026-02-05.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-04</div>
-                    <div class="digest-title">2026年2月4日 财经简报</div>
-                </div>
-                <a href="2026-02-04.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-03</div>
-                    <div class="digest-title">2026年2月3日 财经简报</div>
-                </div>
-                <a href="2026-02-03.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-02</div>
-                    <div class="digest-title">2026年2月2日 财经简报</div>
-                </div>
-                <a href="2026-02-02.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-02-01</div>
-                    <div class="digest-title">2026年2月1日 财经简报</div>
-                </div>
-                <a href="2026-02-01.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-31</div>
-                    <div class="digest-title">2026年1月31日 财经简报</div>
-                </div>
-                <a href="2026-01-31.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-30</div>
-                    <div class="digest-title">财经简报：2026年1月30日</div>
-                </div>
-                <a href="2026-01-30.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-29</div>
-                    <div class="digest-title">2026年1月29日 财经简报</div>
-                </div>
-                <a href="2026-01-29.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-28</div>
-                    <div class="digest-title">2026年1月28日 财经简报</div>
-                </div>
-                <a href="2026-01-28.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-27</div>
-                    <div class="digest-title">2026年1月27日 财经简报</div>
-                </div>
-                <a href="2026-01-27.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-26</div>
-                    <div class="digest-title">财经简报 | 2026-01-26</div>
-                </div>
-                <a href="2026-01-26.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-25</div>
-                    <div class="digest-title">2026年1月25日 财经简报</div>
-                </div>
-                <a href="2026-01-25.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-24</div>
-                    <div class="digest-title">财经简报 | 2026年1月24日</div>
-                </div>
-                <a href="2026-01-24.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-23</div>
-                    <div class="digest-title">财经简报 | 2026年1月23日</div>
-                </div>
-                <a href="2026-01-23.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-22</div>
-                    <div class="digest-title">2026年1月22日 财经简报</div>
-                </div>
-                <a href="2026-01-22.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-21</div>
-                    <div class="digest-title">2026年1月21日 财经简报</div>
-                </div>
-                <a href="2026-01-21.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-20</div>
-                    <div class="digest-title">2026年1月20日 财经简报</div>
-                </div>
-                <a href="2026-01-20.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-19</div>
-                    <div class="digest-title">财经简报 | 2026-01-19</div>
-                </div>
-                <a href="2026-01-19.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-18</div>
-                    <div class="digest-title">2026年1月18日 财经简报</div>
-                </div>
-                <a href="2026-01-18.md" class="digest-link">阅读</a>
-            </div>
-            <div class="digest-item">
-                <div class="digest-info">
-                    <div class="digest-date">2026-01-17</div>
-                    <div class="digest-title">科技简报 | 2026-01-17</div>
-                </div>
-                <a href="2026-01-17.md" class="digest-link">阅读</a>
-            </div>
-        </div>
+        <main class="digest-list">
+            
+            <a class="digest-item" href="2026-04-11.md">
+                <div>
+                    <span class="digest-date">2026-04-11</span>
+                    <h2>财经简报 | 2026年4月11日</h2>
+                    <p>今日市场受中东局势缓和与AI行业动态双重影响，投资者情绪谨慎乐观。A股券商板块异动，白酒行业周期性复苏信号显现，而国际油价回落至100美元下方，地缘政治风险溢价有所降低。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-04-10.md">
+                <div>
+                    <span class="digest-date">2026-04-10</span>
+                    <h2>2026年4月10日 财经简报</h2>
+                    <p>今日全球市场受中东局势持续紧张、AI技术竞争加剧及地缘政治风险多重因素影响，原油价格大幅波动，科技股分化明显，投资者密切关注各国政策应对措施。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-04-09.md">
+                <div>
+                    <span class="digest-date">2026-04-09</span>
+                    <h2>财经简报 | 2026-04-09</h2>
+                    <p>地缘政治缓和推动油价暴跌，科技巨头AI竞赛白热化，市场关注政策转向与新兴投资机会。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-04-08.md">
+                <div>
+                    <span class="digest-date">2026-04-08</span>
+                    <h2>2026年4月8日 财经简报</h2>
+                    <p>2026年4月8日 财经简报 导语： 今日市场聚焦中东地缘政治风险缓解、科技股估值重估及新能源产业链动态，油价大幅波动引发全球市场连锁反应，AI与绿色转型成为投资主线。 🔥 今日热点 1. 特朗普暂停对伊朗攻击两周，油价暴跌9% 看点 ：地缘风险骤降，油价暴跌9%，全球通胀压力缓解，能源股承压。 2</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-04-07.md">
+                <div>
+                    <span class="digest-date">2026-04-07</span>
+                    <h2>财经简报 | 2026-04-07</h2>
+                    <p>财经简报 | 2026 04 07 导语 ：今日市场聚焦伊朗局势、科技巨头动态及政策变化，美股受地缘政治影响波动，AI与半导体领域持续活跃，投资者关注利率政策与市场底部信号。 🔥 今日热点 1. 特朗普称伊朗停火提案&quot;重要但不够好&quot;，霍尔木兹海峡临近截止日期 看点 ：中东局势升级可能推高油价，影响全</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-04-06.md">
+                <div>
+                    <span class="digest-date">2026-04-06</span>
+                    <h2>财经简报 | 2026年4月6日</h2>
+                    <p>地缘政治紧张局势升级，科技行业AI竞争加剧，全球市场关注政策动向与经济数据。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-04-05.md">
+                <div>
+                    <span class="digest-date">2026-04-05</span>
+                    <h2>财经简报 | 2026-04-05</h2>
+                    <p>财经简报 | 2026 04 05 导语 ：地缘政治紧张局势升级、科技巨头AI战略调整、全球经济数据波动，今日市场焦点集中在美伊冲突、苹果AI布局及全球宏观经济变化上。 🔥 今日热点 1. 特朗普警告伊朗&quot;48小时前地狱将降临&quot;，美军搜索失踪成员 intensifies 看点 ：中东局势骤然紧张，油</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-04-04.md">
+                <div>
+                    <span class="digest-date">2026-04-04</span>
+                    <h2>2026年4月4日 财经简报</h2>
+                    <p>2026年4月4日 财经简报 导语 ：今日市场聚焦美国就业数据超预期、中东局势紧张升级、科技巨头高管变动及AI领域动态，A股市场风格切换需求强烈，碳酸锂价格大幅波动引发关注。 🔥 今日热点 1. 美国3月非农就业增加17.8万人，失业率4.3% 看点 ：就业数据超预期，强化美联储降息预期，利好全球风</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-04-03.md">
+                <div>
+                    <span class="digest-date">2026-04-03</span>
+                    <h2>财经简报 | 2026年4月3日</h2>
+                    <p>财经简报 | 2026年4月3日 导语： 伊朗地缘政治紧张局势持续升级，美股就业数据与科技巨头动态备受关注，全球市场面临多重不确定性。 🔥 今日热点 1. 特斯拉Q1交付报告不及预期，股价创2026年最大跌幅 看点 ：交付数据低于市场预期，引发投资者对电动车需求放缓担忧，拖累特斯拉股价单日暴跌。 2</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-04-02.md">
+                <div>
+                    <span class="digest-date">2026-04-02</span>
+                    <h2>2026年4月2日 财经简报</h2>
+                    <p>今日市场聚焦SpaceX IPO、美联储政策转向及美伊地缘政治风险，科技与医药板块波动加剧，投资者需关注政策变化对资产配置的影响。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-04-01.md">
+                <div>
+                    <span class="digest-date">2026-04-01</span>
+                    <h2>财经简报 | 2026年4月1日</h2>
+                    <p>今日市场聚焦地缘政治风险与科技巨头财报，AI概念股波动加剧，中东局势变化引发全球资产重新定价。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-31.md">
+                <div>
+                    <span class="digest-date">2026-03-31</span>
+                    <h2>财经简报 | 2026年3月31日</h2>
+                    <p>财经简报 | 2026年3月31日 今日核心：油价飙升引发全球通胀担忧，美联储暂缓加息，科技股震荡，中国供应链调整应对地缘风险。 🔥 今日热点 1. Brent原油创历史性月度暴涨，WTI自2022年来首破100美元 看点 ：霍尔木兹海峡危机推高油价，全球通胀压力骤增，美联储暂缓加息。 2. 中国供</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-30.md">
+                <div>
+                    <span class="digest-date">2026-03-30</span>
+                    <h2>财经简报 | 2026-03-30</h2>
+                    <p>财经简报 | 2026 03 30 今日核心：地缘政治紧张升级、AI药物突破、房地产政策调整、科技巨头估值争议 🔥 今日热点 1. 巴基斯坦准备主办美伊会谈，特朗普考虑部署地面部队 看点 ：中东局势紧张升级，可能引发油价波动和避险资产需求增加。 2. 特朗普禁止投资者购房政策或牺牲更大房地产交易 看</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-29.md">
+                <div>
+                    <span class="digest-date">2026-03-29</span>
+                    <h2>2026年3月29日 财经简报</h2>
+                    <p>地缘政治紧张局势升级引发全球能源市场震荡，伊朗冲突持续发酵，油价波动加剧。同时，国内消费复苏与AI技术革新成为市场关注焦点，投资者需密切关注政策动向与行业变化。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-28.md">
+                <div>
+                    <span class="digest-date">2026-03-28</span>
+                    <h2>财经简报 | 2026年3月28日</h2>
+                    <p>财经简报 | 2026年3月28日 今日市场受多重因素影响，科技股波动加剧，政策面与地缘政治风险交织，投资者需密切关注市场变化。 🔥 今日热点 1. TSA资金更新：众议院共和党否决DHS提案，机场延误持续 看点 : 政府 shutdown 延长，机场安检人员工资发放延迟，影响出行安全与效率。 2.</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-27.md">
+                <div>
+                    <span class="digest-date">2026-03-27</span>
+                    <h2>财经简报 | 2026-03-27</h2>
+                    <p>今日市场聚焦中东局势、AI投资热潮与地缘政治博弈，全球市场在不确定性中寻找新平衡。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-26.md">
+                <div>
+                    <span class="digest-date">2026-03-26</span>
+                    <h2>财经简报 | 2026年3月26日</h2>
+                    <p>财经简报 | 2026年3月26日 导语 ：伊朗局势持续发酵，特朗普将访华，美股波动加剧，中国市场关注房地产企稳与AI创新，投资者需警惕地缘政治风险对全球市场的连锁反应。 🔥 今日热点 1. 伊朗无意与美国谈判，特朗普停战提案正在审查 看点 ：中东局势升级，油价飙升，全球供应链承压，避险资产受追捧。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-25.md">
+                <div>
+                    <span class="digest-date">2026-03-25</span>
+                    <h2>财经简报 | 2026-03-25</h2>
+                    <p>财经简报 | 2026 03 25 今日全球市场聚焦美伊冲突升级、科技巨头财报与AI融资热潮，地缘政治风险与科技创新交织影响市场走向。 🔥 今日热点 1. Meta被判赔偿3.75亿美元，违反新墨西哥州儿童保护法 看点 : 科技巨头再陷法律危机，儿童安全监管趋严将推高合规成本。 2. 特朗普宣布暂缓</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-24.md">
+                <div>
+                    <span class="digest-date">2026-03-24</span>
+                    <h2>财经简报 | 2026年3月24日</h2>
+                    <p>财经简报 | 2026年3月24日 导语 ：中东局势持续扰动全球市场，特朗普政策引发油价巨震，A股市场在震荡中寻找方向，科技与消费板块分化明显。 🔥 今日热点 1. 特朗普发帖前美股与原油期货交易量激增 看点 ：市场提前获知特朗普政策信号，反映信息不对称交易风险。 2. 原油价格暴跌近11%，特朗普</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-23.md">
+                <div>
+                    <span class="digest-date">2026-03-23</span>
+                    <h2>2026年3月23日 财经简报</h2>
+                    <p>地缘政治紧张局势持续升级，霍尔木兹海峡危机引发全球能源市场震荡，AI与科技领域投资热潮不减，市场关注政策动向与行业变革。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-22.md">
+                <div>
+                    <span class="digest-date">2026-03-22</span>
+                    <h2>财经简报 | 2026年3月22日</h2>
+                    <p>财经简报 | 2026年3月22日 导语 ：中东冲突持续升级，特朗普政策引发市场波动，AI与新能源行业迎来新变革，全球市场在不确定性中寻找方向。 🔥 今日热点 1. 伊朗核设施遭袭，以色列否认责任 看点 ：中东局势紧张，油价或飙升至180美元，全球能源供应链面临冲击。 2. 特朗普威胁部署ICE a</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-21.md">
+                <div>
+                    <span class="digest-date">2026-03-21</span>
+                    <h2>财经简报 | 2026年3月21日</h2>
+                    <p>财经简报 | 2026年3月21日 今日核心：地缘政治扰动市场，黄金暴跌引发避险资产重估，科技股波动加剧，AI商业化进程受关注。 🔥 今日热点 1. 特朗普称考虑&quot;逐步结束&quot;伊朗军事行动，但拒绝立即停火 看点 ：中东局势缓和预期升温，油价承压，地缘溢价回落。 2. 黄金单周暴跌近10%，创2011年</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-20.md">
+                <div>
+                    <span class="digest-date">2026-03-20</span>
+                    <h2>财经简报 | 2026-03-20</h2>
+                    <p>财经简报 | 2026 03 20 导语： 今日市场聚焦伊朗战争对全球供应链的冲击，美联储政策不确定性加剧，科技巨头竞争格局生变，投资者密切关注通胀预期与地缘政治风险交织下的市场动向。 🔥 今日热点 1. 特朗普要求司法部继续调查鲍威尔， complicating Warsh美联储提名 看点 ：政治</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-19.md">
+                <div>
+                    <span class="digest-date">2026-03-19</span>
+                    <h2>2026年3月19日 财经简报</h2>
+                    <p>2026年3月19日 财经简报 今日核心：中东地缘政治紧张推高油价，科技巨头财报亮眼，美联储政策转向预期升温。 🔥 今日热点 1. 美光营收近三倍增长，超预期提振半导体板块 [CNBC] 看点 : 内存需求激增，科技股迎来业绩拐点，半导体板块或迎估值修复。 2. 伊朗导弹袭击卡塔尔天然气设施，油价突</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-18.md">
+                <div>
+                    <span class="digest-date">2026-03-18</span>
+                    <h2>财经简报 | 2026年3月18日</h2>
+                    <p>财经简报 | 2026年3月18日 今日核心：美联储利率决议在即，中东局势升级扰动全球市场，科技巨头动态频出。 🔥 今日热点 1. 美联储周三发布最新利率决议 看点 ：市场预期暂停加息，政策转向信号将影响全球流动性。 2. 伊朗安全首领遭袭身亡，中东局势骤然升级 看点 ：能源安全风险飙升，油价波动加</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-17.md">
+                <div>
+                    <span class="digest-date">2026-03-17</span>
+                    <h2>2026年3月17日 财经简报</h2>
+                    <p>2026年3月17日 财经简报 导语 ：全球市场聚焦伊朗局势与科技巨头动态，美股NVIDIA订单预期破万亿美元，霍尔木兹海峡安全风险引发油价波动，中概股监管趋严，科技与地缘政治双重影响市场走向。 🔥 今日热点 1. NVIDIA CEO预计2027年前Blackwell和Vera Rubin芯片订单</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-16.md">
+                <div>
+                    <span class="digest-date">2026-03-16</span>
+                    <h2>财经简报 | 2026-03-16</h2>
+                    <p>财经简报 | 2026 03 16 导语 ：中东地缘政治紧张局势升级推高油价，特朗普政府威胁打击伊朗石油设施引发全球市场震荡，同时A股市场受政策预期影响波动加剧，投资者密切关注美联储政策动向。 🔥 今日热点 1. 美油价格突破100美元，特朗普政府威胁打击伊朗石油出口设施 看点 ：地缘政治风险溢价飙</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-15.md">
+                <div>
+                    <span class="digest-date">2026-03-15</span>
+                    <h2>财经简报 | 2026年3月15日</h2>
+                    <p>财经简报 | 2026年3月15日 导语 ：伊朗地缘政治危机持续发酵，能源市场波动加剧，同时企业并购与科技领域动态频出，投资者需密切关注地缘风险与市场结构性变化。 🔥 今日热点 1. Fertitta周末谈判收购凯撒娱乐，亿万富翁卡尔·伊坎等待时机 看点 ：博彩业巨头并购潮开启，可能引发行业整合，相</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-14.md">
+                <div>
+                    <span class="digest-date">2026-03-14</span>
+                    <h2>财经简报 | 2026年3月14日</h2>
+                    <p>财经简报 | 2026年3月14日 导语： 伊朗地缘政治危机持续发酵，油价突破100美元/桶，美联储调查风波引发市场关注，AI技术冲击就业市场，全球财经格局正经历深刻变革。 🔥 今日热点 1. 油价连续两日站上100美元，市场无视美国措施 看点 ：伊朗战争推高油价，美国&quot;钻 baby drill&quot;策</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-13.md">
+                <div>
+                    <span class="digest-date">2026-03-13</span>
+                    <h2>2026年3月13日 财经简报</h2>
+                    <p>今日市场焦点：美联储降息预期降温、中东地缘政治紧张加剧、科技巨头人事变动频繁，全球市场在多重因素影响下呈现震荡格局。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-12.md">
+                <div>
+                    <span class="digest-date">2026-03-12</span>
+                    <h2>财经简报 | 2026-03-12</h2>
+                    <p>财经简报 | 2026 03 12 导语 ：中东地缘政治紧张局势引发全球能源市场波动，特朗普政府释放战略石油储备应对伊朗战争冲击，同时科技巨头调整战略布局，市场关注政策转向与行业变革。 🔥 今日热点 1. 特朗普宣布动用战略石油储备平抑能源成本 看点 ：美伊战争推高油价，美国释放储备稳定市场，缓解通</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-11.md">
+                <div>
+                    <span class="digest-date">2026-03-11</span>
+                    <h2>2026年3月11日 财经简报</h2>
+                    <p>2026年3月11日 财经简报 今日核心主题：地缘政治紧张加剧，科技股与新能源板块表现分化，市场关注美联储人事变动与政策走向。 🔥 今日热点 1. Oracle股价大涨9%，云业务收入增长44%超预期 看点 ：云计算强劲增长推动股价飙升，科技巨头转型成效显现，投资者信心提振。 2. 宁德时代公布超预</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-10.md">
+                <div>
+                    <span class="digest-date">2026-03-10</span>
+                    <h2>财经简报 | 2026年3月10日</h2>
+                    <p>美伊冲突持续发酵，油价冲高回落引发全球市场震荡；国内两会政策红利释放，AI与新能源板块迎来结构性机会。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-09.md">
+                <div>
+                    <span class="digest-date">2026-03-09</span>
+                    <h2>2026年3月9日 财经简报</h2>
+                    <p>2026年3月9日 财经简报 导语 ：中东地缘政治紧张局势持续升级，油价突破100美元/桶，全球市场波动加剧；中国与西方国家关系面临新挑战，科技与能源板块成为市场关注焦点。 🔥 今日热点 1. Oil prices top $100 per barrel as big Middle East pro</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-08.md">
+                <div>
+                    <span class="digest-date">2026-03-08</span>
+                    <h2>财经简报 | 2026年3月8日</h2>
+                    <p>财经简报 | 2026年3月8日 导语 ：中东地缘政治紧张局势持续升级，全球能源市场承压；国内经济结构调整深化，AI与新能源领域迎来新机遇；政策面与市场情绪交织，投资者需密切关注国际局势变化与国内政策动向。 🔥 今日热点 1. Kuwait cuts oil production as Strait</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-07.md">
+                <div>
+                    <span class="digest-date">2026-03-07</span>
+                    <h2>2026年3月7日 财经简报</h2>
+                    <p>2026年3月7日 财经简报 导语： 地缘政治紧张局势主导全球市场，伊朗冲突推高油价至历史性涨幅，特朗普政策与美联储降息预期交织，市场波动加剧。 🔥 今日热点 1. 原油本周暴涨35%，创1983年以来最大单周涨幅 看点 ：伊朗战争引发供应担忧，能源通胀压力陡增，全球经济增长承压。 2. 特朗普称伊</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-06.md">
+                <div>
+                    <span class="digest-date">2026-03-06</span>
+                    <h2>财经简报 | 2026年3月6日</h2>
+                    <p>今日核心：美伊冲突持续升级，全球能源与供应链承压，科技巨头AI战略博弈加剧，中国GDP目标设定引发市场关注。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-05.md">
+                <div>
+                    <span class="digest-date">2026-03-05</span>
+                    <h2>财经简报 | 2026年3月5日</h2>
+                    <p>财经简报 | 2026年3月5日 今日全球市场聚焦AI产业链与地缘政治风险，美股科技股波动加剧，国内政策面与市场情绪交织，投资者需密切关注美联储政策动向及中美贸易关系变化。 🔥 今日热点 1. Nvidia CEO称300亿美元OpenAI投资或为最后一次 看点 : AI投资见顶信号，半导体板块或迎</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-04.md">
+                <div>
+                    <span class="digest-date">2026-03-04</span>
+                    <h2>2026年3月4日 财经简报</h2>
+                    <p>2026年3月4日 财经简报 导语 ：伊朗冲突持续升级引发全球市场震荡，科技巨头AI战略加速推进，地缘政治风险与科技创新成为今日市场核心关注点。 🔥 今日热点 1. 特朗普政府就伊朗战争提供 shifting narrative，民主党借机反击 看点 ：美伊战争叙事分歧加剧，政治博弈或影响市场风险偏</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-03.md">
+                <div>
+                    <span class="digest-date">2026-03-03</span>
+                    <h2>财经简报 | 2026-03-03</h2>
+                    <p>财经简报 | 2026 03 03 导语 ：中东地缘政治紧张局势持续发酵，伊朗冲突引发全球市场波动，黄金价格飙升，航空业受冲击。同时，科技巨头苹果发布新品，国内新能源车市场格局生变，投资者需密切关注地缘风险与政策动向。 🔥 今日热点 1. 伊朗冲突扰乱全球航空 看点 ：中东战火导致航班受限，油价上涨</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-02.md">
+                <div>
+                    <span class="digest-date">2026-03-02</span>
+                    <h2>财经简报 | 2026年3月2日</h2>
+                    <p>地缘政治紧张局势推高油价，市场关注伊朗局势发展；科技巨头加速AI硬件布局，OpenAI获创纪录融资；A股市场结构性分化明显，新能源板块迎来反弹契机。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-03-01.md">
+                <div>
+                    <span class="digest-date">2026-03-01</span>
+                    <h2>财经简报 | 2026年3月1日</h2>
+                    <p>财经简报 | 2026年3月1日 今日核心主题：地缘政治风险升级与科技巨头财报季交织，市场波动加剧。美国对伊朗军事行动引发油价飙升，巴菲特时代落幕的伯克希尔业绩下滑，AI领域融资与竞争白热化，投资者需密切关注风险与机遇并存的市场环境。 🔥 今日热点 1. 美国对伊朗军事行动引发全球油价飙升 看点 ：</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-28.md">
+                <div>
+                    <span class="digest-date">2026-02-28</span>
+                    <h2>财经简报 | 2026年2月28日</h2>
+                    <p>财经简报 | 2026年2月28日 今日全球市场聚焦中美政策博弈与科技巨头动向，AI领域地缘政治风险升温，美股波动加剧，中国央行出手稳定汇率，投资者密切关注政策变化对市场的影响。 🔥 今日热点 1. 特朗普政府将Anthropic列入黑名单，AI公司拒绝五角大楼要求 看点 : AI地缘政治风险升级，</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-27.md">
+                <div>
+                    <span class="digest-date">2026-02-27</span>
+                    <h2>2026年2月27日 财经简报</h2>
+                    <p>2026年2月27日 财经简报 今日全球市场呈现分化走势，科技巨头财报喜忧参半，地缘政治风险与政策博弈持续升温，投资者需密切关注美联储政策动向及国内经济复苏信号。 🔥 今日热点 1. Netflix放弃华纳交易，转向派拉蒙 看点 : 流媒体巨头并购格局生变，华纳估值获市场认可。 2. 英伟达业绩超预</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-26.md">
+                <div>
+                    <span class="digest-date">2026-02-26</span>
+                    <h2>财经简报 | 2026-02-26</h2>
+                    <p>财经简报 | 2026 02 26 今日核心：AI浪潮持续推动科技股上涨，中美贸易关系迎来新平衡，全球市场关注政策与科技双重变革。 🔥 今日热点 1. Nvidia财报超预期，数据中心收入飙升75% 看点 : AI需求爆发推动业绩大增，科技股龙头持续领跑市场。 2. 特朗普与科技巨头签署数据中心电力</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-25.md">
+                <div>
+                    <span class="digest-date">2026-02-25</span>
+                    <h2>财经简报 | 2026-02-25</h2>
+                    <p>财经简报 | 2026 02 25 导语 ：AI革命持续重塑金融业，大行裁员与科技股反弹并行；中美贸易摩擦升级，出口管制引发市场担忧；全球AI竞赛加剧，谷歌巨资投入挑战行业格局。 🔥 今日热点 1. Jamie Dimon称AI正重塑摩根大通员工结构，银行计划&quot;大规模再部署&quot; 看点 ：金融业AI革命</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-24.md">
+                <div>
+                    <span class="digest-date">2026-02-24</span>
+                    <h2>财经简报 | 2026-02-24</h2>
+                    <p>财经简报 | 2026 02 24 今日核心主题：AI技术冲击市场格局，政策博弈与经济数据交织影响投资方向。 🔥 今日热点 1. 网络安全股连续两日下跌，Anthropic新工具引发AI颠覆担忧 看点 ：AI威胁传统网络安全模式，相关板块承压，投资者需警惕技术颠覆风险。 2. 美国房贷利率跌破6%，</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-23.md">
+                <div>
+                    <span class="digest-date">2026-02-23</span>
+                    <h2>财经简报 | 2026年2月23日</h2>
+                    <p>财经简报 | 2026年2月23日 今日全球市场聚焦特朗普关税政策升级、AI行业竞争加剧及通胀数据变化，贸易摩擦与科技博弈成为影响市场走向的关键因素。 🔥 今日热点 1. 特朗普宣布全球关税上调至15%，立即生效 看点 : 全球贸易格局突变，进口成本激增，可能引发通胀连锁反应。 2. 美国1月通胀率</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-22.md">
+                <div>
+                    <span class="digest-date">2026-02-22</span>
+                    <h2>财经简报 | 2026年2月22日</h2>
+                    <p>财经简报 | 2026年2月22日 今日全球市场受多重因素影响，特朗普政策变动、地缘政治紧张及科技行业动态成为焦点，投资者需密切关注政策转向对市场流动性的潜在冲击。 🔥 今日热点 1. 特朗普宣布全球关税上调至15%，立即生效 看点 : 贸易保护主义升级，全球供应链承压，出口企业首当其冲。 2. 美</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-21.md">
+                <div>
+                    <span class="digest-date">2026-02-21</span>
+                    <h2>财经简报 | 2026年2月21日</h2>
+                    <p>财经简报 | 2026年2月21日 今日全球市场受特朗普新政、AI投资热潮及经济数据波动影响，贸易政策不确定性加剧，科技股与消费板块分化明显，投资者密切关注通胀走势与地缘政治风险。 🔥 今日热点 1. 特朗普宣布征收10%全球关税 看点 ：最高法院驳回后强势反击，全球贸易格局面临重构，出口企业承压。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-20.md">
+                <div>
+                    <span class="digest-date">2026-02-20</span>
+                    <h2>财经简报 | 2026年2月20日</h2>
+                    <p>财经简报 | 2026年2月20日 导语 ：今日市场聚焦AI竞争加剧、地缘政治风险上升及企业财报季，通胀数据低于预期为市场注入乐观情绪，但特朗普对伊朗政策动向引发原油价格波动。 🔥 今日热点 1. Amazon超越沃尔玛首登年度营收榜首，两家公司竞逐AI增长 看点 ：电商格局重塑，AI战略成关键竞争</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-19.md">
+                <div>
+                    <span class="digest-date">2026-02-19</span>
+                    <h2>财经简报 | 2026年2月19日</h2>
+                    <p>今日市场焦点：美联储政策分歧加剧，AI商业化加速，中国车企销量进入&quot;微增&quot;新常态，全球科技企业面临地缘政治挑战。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-18.md">
+                <div>
+                    <span class="digest-date">2026-02-18</span>
+                    <h2>财经简报 | 2026-02-18</h2>
+                    <p>财经简报 | 2026 02 18 今日核心：AI芯片需求激增、巴菲特减持苹果、伊朗封锁霍尔木兹海峡引发油价波动，市场关注通胀数据与政策走向。 🔥 今日热点 1. Meta扩大与NVIDIA合作，数据中心将部署数百万AI芯片 看点 ：科技巨头AI竞赛升级，芯片需求激增，NVIDIA股价有望再创新高。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-17.md">
+                <div>
+                    <span class="digest-date">2026-02-17</span>
+                    <h2>财经简报 | 2026-02-17</h2>
+                    <p>财经简报 | 2026 02 17 今日全球市场聚焦AI技术竞争、地缘政治风险及经济数据表现，科技巨头动作频繁，政策环境复杂多变，投资者需密切关注行业动态与宏观政策变化。 🔥 今日热点 1. Anthropic通过OpenAI批判广告获11%用户增长 看点 : 超级碗广告效果显著，AI竞争白热化，A</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-16.md">
+                <div>
+                    <span class="digest-date">2026-02-16</span>
+                    <h2>财经简报 | 2026-02-16</h2>
+                    <p>财经简报 | 2026 02 16 今日全球市场聚焦AI技术迭代、地缘政治风险及政策变化，科技股波动加剧，投资者密切关注美联储政策转向信号。 🔥 今日热点 1. Trump trade adviser Navarro says administration may force data center</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-15.md">
+                <div>
+                    <span class="digest-date">2026-02-15</span>
+                    <h2>财经简报 | 2026-02-15</h2>
+                    <p>财经简报 | 2026 02 15 今日全球市场聚焦政策转向与科技变革，AI投资热潮持续，地缘政治风险与经济数据交织影响市场情绪。 🔥 今日热点 1. 特朗普将发布行政令要求中期选举前实施选民身份证制度 看点 ：可能影响美国中期选举结果，引发两党激烈辩论，政策不确定性上升。 2. 美欧利益&quot;紧密相连</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-14.md">
+                <div>
+                    <span class="digest-date">2026-02-14</span>
+                    <h2>2026年2月14日 财经简报</h2>
+                    <p>2026年2月14日 财经简报 今日全球市场聚焦AI技术变革与地缘政治风险，科技巨头股价波动引发市场关注，同时多国政策调整将影响未来投资格局。 🔥 今日热点 1. Nvidia股价下跌，AMD上涨，Arista或成&quot;罪魁祸首&quot; 看点 : 网络设备商Arista业绩预警引发芯片股连锁反应，科技巨头竞争</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-13.md">
+                <div>
+                    <span class="digest-date">2026-02-13</span>
+                    <h2>财经简报 | 2026-02-13</h2>
+                    <p>财经简报 | 2026 02 13 今日市场聚焦：科技股分化明显，AI概念持续发酵，新能源汽车与消费电子板块表现各异。 🔥 今日热点 1. Apple股价创四月以来最大单日跌幅，面临FTC调查与Siri延迟报告 看点 : 监管压力与技术延迟双重打击，科技巨头估值承压。 2. Rivian股价大涨15</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-12.md">
+                <div>
+                    <span class="digest-date">2026-02-12</span>
+                    <h2>2026年2月12日 财经简报</h2>
+                    <p>2026年2月12日 财经简报 今日市场焦点：美国就业数据超预期但前景不明，关税政策引发全球贸易格局重塑，科技巨头财报与重组动态牵动市场神经。 🔥 今日热点 1. McDonald’s earnings beat estimates as chain&#x27;s value push pays off 看点</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-11.md">
+                <div>
+                    <span class="digest-date">2026-02-11</span>
+                    <h2>2026年2月11日 财经简报</h2>
+                    <p>2026年2月11日 财经简报 今日市场聚焦AI冲击波、就业数据与财报季，美股科技股承压，亚洲市场表现亮眼，投资者密切关注美联储政策动向。 🔥 今日热点 1. AI威胁重创软件股，金融股成下一目标 看点 : LPL单日暴跌11%，AI自动化正颠覆传统金融服务业，引发市场对行业盈利模式的担忧。 2. </p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-10.md">
+                <div>
+                    <span class="digest-date">2026-02-10</span>
+                    <h2>2026年2月10日 财经简报</h2>
+                    <p>2026年2月10日 财经简报 今日市场聚焦AI投资热潮与政策博弈，科技巨头财报季临近，投资者密切关注美联储政策动向。全球供应链重构加速，新兴市场投资机会凸显。 🔥 今日热点 1. Target增加门店人力投入，裁员500人改善客户体验 看点 ：零售巨头战略转型，裁员与投资并举反映消费行业结构性调整</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-09.md">
+                <div>
+                    <span class="digest-date">2026-02-09</span>
+                    <h2>2026年2月9日 财经简报</h2>
+                    <p>2026年2月9日 财经简报 今日市场聚焦特朗普政策影响、科技巨头动态及全球贸易格局变化，投资者密切关注政策面与基本面共振机会。 🔥 今日热点 1. 特朗普要求商务部长卢特尼克辞职 看点 ：爱泼斯坦文件引发政商震荡，或冲击特朗普政府商业政策方向。 2. 佐治亚州选举案文件将公开 看点 ：司法程序进展</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-08.md">
+                <div>
+                    <span class="digest-date">2026-02-08</span>
+                    <h2>财经简报 | 2026-02-08</h2>
+                    <p>财经简报 | 2026 02 08 今日核心：特朗普政策扰动美股，科技股承压；中国水贝黄金市场热度不减；AI与新能源板块持续活跃。 🔥 今日热点 1. 特朗普政府股权持仓引发美国企业风险 看点 : 政府干预市场机制，可能引发企业治理混乱和股价波动。 2. 马斯克财富路径：SpaceX或助其成为万亿富</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-07.md">
+                <div>
+                    <span class="digest-date">2026-02-07</span>
+                    <h2>2026年2月7日 财经简报</h2>
+                    <p>2026年2月7日 财经简报 导语 ：AI投资热潮与市场波动并存，比特币强势反弹，科技巨头资本支出引发争议，中国水贝黄金市场持续火热，全球投资者密切关注政策动向与行业变革。 🔥 今日热点 1. 比特币反弹回$70,000上方，24小时内涨幅超16% 看点 ：加密货币市场剧烈波动后快速反弹，显示投资者</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-06.md">
+                <div>
+                    <span class="digest-date">2026-02-06</span>
+                    <h2>2026年2月6日 财经简报</h2>
+                    <p>2026年2月6日 财经简报 今日市场波动加剧，科技股与加密货币大幅调整，同时政策面与行业动态呈现分化态势。投资者需密切关注美联储政策走向及科技巨头财报表现。 🔥 今日热点 1. Amazon股价暴跌10%，因2000亿美元支出预期与业绩不及预期 看点 : 云业务增长放缓致业绩承压，拖累科技板块整体</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-05.md">
+                <div>
+                    <span class="digest-date">2026-02-05</span>
+                    <h2>2026年2月5日 财经简报</h2>
+                    <p>2026年2月5日 财经简报 今日全球市场聚焦科技巨头财报与地缘政治风险，AI投资热潮与半导体行业波动并存，投资者需密切关注政策动向与行业基本面变化。 🔥 今日热点 1. Google母公司营收超预期，计划大幅增加AI投资 看点 ：科技巨头AI投入加码，将重塑行业竞争格局，利好AI产业链相关企业。 </p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-04.md">
+                <div>
+                    <span class="digest-date">2026-02-04</span>
+                    <h2>2026年2月4日 财经简报</h2>
+                    <p>2026年2月4日 财经简报 今日全球市场波动加剧，科技股与政策面主导行情，AMD业绩不及预期引发芯片股回调，比特币跌破7.3万关口，美国政府重启后政策动向备受关注。 🔥 今日热点 1. AMD股价大跌因业绩未达部分预期 看点 : AI芯片竞争加剧，AMD失守关键位置，拖累半导体板块。 2. 比特币</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-03.md">
+                <div>
+                    <span class="digest-date">2026-02-03</span>
+                    <h2>2026年2月3日 财经简报</h2>
+                    <p>2026年2月3日 财经简报 导语 ：今日市场聚焦AI与国防需求驱动美股表现，政府 shutdown 延迟就业数据，同时中美贸易谈判取得突破。黄金价格剧烈波动引发市场关注，多家科技巨头融资动态频出，投资者需密切关注政策变化与市场情绪。 🔥 今日热点 1. Palantir超预期业绩：AI与国防需求强</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-02.md">
+                <div>
+                    <span class="digest-date">2026-02-02</span>
+                    <h2>2026年2月2日 财经简报</h2>
+                    <p>2026年2月2日 财经简报 导语： 政府停摆危机暂缓、特朗普 crypto 公司引争议、美联储主席人选受关注，今日财经焦点围绕政策变动与市场反应展开。 🔥 今日热点 1. Speaker Johnson: &#x27;Confident&#x27; government shutdown will end by Tu</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-02-01.md">
+                <div>
+                    <span class="digest-date">2026-02-01</span>
+                    <h2>2026年2月1日 财经简报</h2>
+                    <p>2026年2月1日 财经简报 导语： 今日市场焦点围绕美股波动、美国政府停摆风险及美联储主席人选展开，同时A股市场面临经济放缓压力，科技与消费板块表现分化。投资者需密切关注政策动向与市场情绪变化。 🔥 今日热点 1. 比特币跌破78,000美元，市场消化白银抛售与特朗普美联储主席人选 看点 ：加密货</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-31.md">
+                <div>
+                    <span class="digest-date">2026-01-31</span>
+                    <h2>2026年1月31日 财经简报</h2>
+                    <p>2026年1月31日 财经简报 今日市场聚焦：美联储主席人选引发全球市场震荡，贵金属价格暴跌，政府停摆危机暂缓，科技与消费板块呈现分化走势。 🔥 今日热点 1. 特朗普提名凯文·沃什担任美联储主席 看点 ：鹰派立场引发市场对美联储独立性担忧，可能加速加息进程。 2. 白银单日暴跌30%，创1980年</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-30.md">
+                <div>
+                    <span class="digest-date">2026-01-30</span>
+                    <h2>财经简报：2026年1月30日</h2>
+                    <p>财经简报：2026年1月30日 今日市场聚焦科技股剧烈波动，黄金价格持续攀升，全球贸易数据引发关注。投资者需密切关注AI技术变革对传统行业的冲击及政策动向。 🔥 今日热点 1. Apple销售激增16%，iPhone需求&quot;惊人&quot; 看点 ：科技巨头超预期业绩提振市场信心，利好苹果产业链。 2. 软件股</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-29.md">
+                <div>
+                    <span class="digest-date">2026-01-29</span>
+                    <h2>2026年1月29日 财经简报</h2>
+                    <p>2026年1月29日 财经简报 导语： 今日市场焦点集中在科技巨头财报、美联储政策转向以及特斯拉战略调整，同时A股市场在存款到期背景下引发投资想象，全球地缘政治风险与AI投资热潮交织，投资者需密切关注政策与市场动态变化。 🔥 今日热点 1. Meta股价大涨10%，超预期营收指引提振市场信心 看点 </p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-28.md">
+                <div>
+                    <span class="digest-date">2026-01-28</span>
+                    <h2>2026年1月28日 财经简报</h2>
+                    <p>今日市场聚焦美联储利率决策、美国政府关门风险及白银价格暴涨，投资者密切关注政策动向与地缘政治变化对全球资产的影响。</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-27.md">
+                <div>
+                    <span class="digest-date">2026-01-27</span>
+                    <h2>2026年1月27日 财经简报</h2>
+                    <p>2026年1月27日 财经简报 导语 ：今日市场受特朗普政策影响显著，医保股大跌，科技巨头沉默引发关注；国内方面，财政压力显现，新能源领域融资活跃，白银价格持续飙升，投资者需密切关注政策变化与市场情绪。 🔥 今日热点 1. Health insurers tumble after Trump adm</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-26.md">
+                <div>
+                    <span class="digest-date">2026-01-26</span>
+                    <h2>财经简报 | 2026-01-26</h2>
+                    <p>财经简报 | 2026 01 26 今日市场受多重因素影响，地缘政治风险与政策博弈成为焦点，投资者需密切关注美联储政策动向及国内经济数据变化。 🔥 今日热点 1. 特朗普威胁对加拿大征收100%关税 看点 ：威胁加中贸易协议，可能引发北美供应链重构，影响相关企业股价。 2. Alex Pretti事</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-25.md">
+                <div>
+                    <span class="digest-date">2026-01-25</span>
+                    <h2>2026年1月25日 财经简报</h2>
+                    <p>2026年1月25日 财经简报 导语 ：特朗普政策冲击波持续发酵，美股受冬季风暴和贸易威胁影响波动，中国楼市与货币政策组合拳引发市场关注，科技巨头战略调整引发行业震荡。 🔥 今日热点 1. 特朗普威胁对加拿大征收100%关税 看点 ：贸易保护主义升级，加中合作恐受重创，北美供应链面临重构风险。 2.</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-24.md">
+                <div>
+                    <span class="digest-date">2026-01-24</span>
+                    <h2>财经简报 | 2026年1月24日</h2>
+                    <p>财经简报 | 2026年1月24日 导语： 今日市场聚焦特朗普政策影响、科技巨头动态及中国宏观经济走向，美股波动加剧，A股结构性机会显现，政策面与行业热点交织，投资者需密切关注地缘政治与科技变革带来的投资机遇。 🔥 今日热点 1. 华尔街担忧私募信贷崩盘风险上升 看点 ：可能引发连锁反应，冲击高收益</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-23.md">
+                <div>
+                    <span class="digest-date">2026-01-23</span>
+                    <h2>财经简报 | 2026年1月23日</h2>
+                    <p>财经简报 | 2026年1月23日 今日核心主题：全球市场聚焦特朗普政策转向，通胀数据与地缘政治风险交织，科技巨头业绩波动引发关注。 🔥 今日热点（5条） 1. 特朗普签署&quot;和平委员会&quot;文件，内塔尼亚胡拟加入 看点 ：中东格局生变，可能重塑美国外交政策走向，影响全球能源市场。 2. 英特尔股价暴跌1</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-22.md">
+                <div>
+                    <span class="digest-date">2026-01-22</span>
+                    <h2>2026年1月22日 财经简报</h2>
+                    <p>2026年1月22日 财经简报 导语 ：特朗普政策转向引发市场波动，科技巨头动作频频，全球经济格局持续调整，投资者需密切关注政策变化与行业动态。 🔥 今日热点 1. 特朗普与北约达成格陵兰岛交易框架，暂缓对欧关税 看点 ：地缘政治缓和，缓解贸易战担忧，利好跨国企业。 2. 摩根大通CEO罕见批评特朗</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-21.md">
+                <div>
+                    <span class="digest-date">2026-01-21</span>
+                    <h2>2026年1月21日 财经简报</h2>
+                    <p>2026年1月21日 财经简报 导语： 今日市场聚焦特朗普政策冲击波，美股波动加剧，黄金飙升；A股分化明显，新能源板块受关注；科技领域固态电池、AI应用获资本青睐；国际关系紧张引发全球资产配置调整。 🔥 今日热点 1. 特朗普&quot;卖美国&quot;言论引发全球资本逃离，美元美债暴跌黄金飙升 [CNBC] 看点 </p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-20.md">
+                <div>
+                    <span class="digest-date">2026-01-20</span>
+                    <h2>2026年1月20日 财经简报</h2>
+                    <p>2026年1月20日 财经简报 导语 ：特朗普贸易政策引发全球市场震荡，欧洲面临多重压力，A股市场结构性机会显现，科技与消费板块值得关注。 🔥 今日热点 1. 特朗普威胁对法国葡萄酒征收200%关税 看点 ：美欧贸易战升级，法国奢侈品首当其冲，全球葡萄酒产业链受冲击。 2. IMF警告欧洲：&quot;Get</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-19.md">
+                <div>
+                    <span class="digest-date">2026-01-19</span>
+                    <h2>财经简报 | 2026-01-19</h2>
+                    <p>财经简报 | 2026 01 19 全球贸易格局与政策动向成为今日焦点，特朗普关税政策持续发酵，市场波动加剧。 🔥 今日热点 1. 特朗普威胁对8国征收25%关税，除非出售格陵兰 看点 ：重塑地缘政治，引发全球贸易风险溢价上升 2. 美台达成贸易协议 看点 ：亚太贸易格局生变，半导体产业链受关注 3</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-18.md">
+                <div>
+                    <span class="digest-date">2026-01-18</span>
+                    <h2>2026年1月18日 财经简报</h2>
+                    <p>2026年1月18日 财经简报 今日全球市场聚焦贸易政策与科技动态，特朗普关税威胁引发市场波动。 🔥 今日热点 1. 特朗普威胁对8个欧洲国家征收25%关税 看点 : 格陵兰问题升级，欧美贸易摩擦加剧，全球市场承压。 2. 华夏基金ETF管理规模破万亿 看点 : 中国ETF市场里程碑，资产管理行业迎</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+
+            <a class="digest-item" href="2026-01-17.md">
+                <div>
+                    <span class="digest-date">2026-01-17</span>
+                    <h2>科技简报 | 2026-01-17</h2>
+                    <p>科技简报 | 2026 01 17 导语： AI 开发工具的争议与进化成为今日焦点，Cloudflare 与 ClickHouse 的收购动作揭示了基础设施与可观测性的融合趋势。国内方面，华为重回手机出货量榜首，而围绕 IDE 未来的讨论引发了开发者社区的激烈交锋。 1. 今日热点 Cursor “</p>
+                </div>
+                <span class="read-link">阅读</span>
+            </a>
+            
+        </main>
 
         <footer>
-            <p>最后更新: 2026-04-11 07:06:21</p>
-            <p>由 Claude AI 驱动 · <a href="https://github.com">GitHub</a></p>
+            共 85 份简报 · 最后更新 2026-07-07 19:38:35 · 内容仅供参考，不构成投资建议。
         </footer>
     </div>
 </body>
