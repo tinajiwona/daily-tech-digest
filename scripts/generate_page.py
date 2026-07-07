@@ -180,6 +180,14 @@ def generate_page(files: list[dict], output_path: Path):
     latest_sections = section_nav(latest["sections"] if latest else [])
     latest_words = f"{latest['words']:,}" if latest else "0"
     archive_html = archive_cards(files[1:] if len(files) > 1 else files)
+    sector_chart_path = PROJECT_ROOT / "digests" / "sector-flow.svg"
+    sector_chart_html = ""
+    if sector_chart_path.exists():
+        sector_chart_html = """
+        <section class="chart-panel" aria-label="板块资金流向图">
+            <img src="digests/sector-flow.svg" alt="板块资金流向图">
+        </section>
+        """
 
     html_content = f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -376,6 +384,22 @@ def generate_page(files: list[dict], output_path: Path):
             font-size: 13px;
         }}
 
+        .chart-panel {{
+            margin: 0 0 24px;
+            padding: 16px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface);
+            box-shadow: var(--shadow);
+        }}
+
+        .chart-panel img {{
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 6px;
+        }}
+
         .article {{
             padding: 28px 34px;
         }}
@@ -504,7 +528,8 @@ def generate_page(files: list[dict], output_path: Path):
             }}
 
             .article,
-            .hero-main {{
+            .hero-main,
+            .chart-panel {{
                 padding: 22px;
             }}
 
@@ -546,6 +571,7 @@ def generate_page(files: list[dict], output_path: Path):
             </aside>
         </section>
 
+{sector_chart_html}
         {latest_sections}
 
         <article class="article">
@@ -563,7 +589,7 @@ def generate_page(files: list[dict], output_path: Path):
         </section>
 
         <footer>
-            由 Claude/GLM + GitHub Actions 自动生成。内容仅供参考，不构成投资建议。
+            由 OpenAI + GitHub Actions 自动生成。内容仅供参考，不构成投资建议。
         </footer>
     </div>
 </body>

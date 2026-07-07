@@ -5,11 +5,14 @@
 """
 
 import json
+import html
+import math
 import os
 import sys
 from datetime import datetime
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Optional, Tuple
 
 import feedparser
 import pytz
@@ -93,6 +96,43 @@ def format_money(value) -> str:
     return f"{number:.2f}"
 
 
+def parse_number(value) -> Optional[float]:
+    """把 akshare 返回的数字、百分比或金额字符串转成 float。"""
+    if value in (None, ""):
+        return None
+
+    if isinstance(value, (int, float)):
+        number = float(value)
+        return None if math.isnan(number) else number
+
+    text = str(value).strip().replace(",", "")
+    if not text or text.lower() == "nan":
+        return None
+
+    multiplier = 1.0
+    if text.endswith("亿"):
+        multiplier = 100000000.0
+        text = text[:-1]
+    elif text.endswith("万"):
+        multiplier = 10000.0
+        text = text[:-1]
+    if text.endswith("%"):
+        text = text[:-1]
+
+    try:
+        number = float(text) * multiplier
+        return None if math.isnan(number) else number
+    except ValueError:
+        return None
+
+
+def format_percent(value) -> str:
+    number = parse_number(value)
+    if number is None:
+        return str(value) if value not in (None, "") else "未知"
+    return f"{number:.2f}%"
+
+
 def first_existing(row, names: list[str], default=""):
     """从 pandas row 中读取第一个存在的字段。"""
     for name in names:
@@ -103,13 +143,13 @@ def first_existing(row, names: list[str], default=""):
     return default
 
 
-def normalize_sector_rows(df, source: str, limit: int) -> list[dict]:
+def normalize_sector_rows(df, source: str) -> list[dict]:
     """规范化 akshare 板块资金流 DataFrame。"""
     rows = []
     if df is None or df.empty:
         return rows
 
-    for _, row in df.head(limit).iterrows():
+    for _, row in df.iterrows():
         name = first_existing(row, ["名称", "板块名称", "行业", "概念"], "未知板块")
         change = first_existing(row, ["今日涨跌幅", "涨跌幅", "最新涨跌幅"], "未知")
         main_net = first_existing(
@@ -127,13 +167,36 @@ def normalize_sector_rows(df, source: str, limit: int) -> list[dict]:
             {
                 "source": source,
                 "name": str(name),
-                "change": str(change),
+                "change": format_percent(change),
+                "change_raw": parse_number(change),
                 "main_net": format_money(main_net),
+                "main_net_raw": parse_number(main_net),
                 "super_net": format_money(super_net),
+                "super_net_raw": parse_number(super_net),
             }
         )
 
     return rows
+
+
+def select_extreme_sector_rows(rows: list[dict], limit: int) -> list[dict]:
+    """保留净流入和净流出两端，避免只看到上涨或只看到下跌。"""
+    valid_rows = [row for row in rows if row.get("main_net_raw") is not None]
+    if not valid_rows:
+        return rows[:limit]
+
+    half = max(1, limit // 2)
+    positive = sorted(valid_rows, key=lambda x: x["main_net_raw"], reverse=True)[:half]
+    negative = sorted(valid_rows, key=lambda x: x["main_net_raw"])[: limit - len(positive)]
+    seen = set()
+    selected = []
+    for row in positive + negative:
+        key = (row["source"], row["name"])
+        if key in seen:
+            continue
+        seen.add(key)
+        selected.append(row)
+    return selected
 
 
 def fetch_sector_fund_flow(config: dict) -> dict:
@@ -150,7 +213,7 @@ def fetch_sector_fund_flow(config: dict) -> dict:
 
     indicator = sector_config.get("indicator", "今日")
     limit = int(sector_config.get("limit", 12))
-    result = {"industry": [], "concept": []}
+    result = {"industry": [], "concept": [], "industry_all": [], "concept_all": []}
 
     targets = [
         ("industry", "行业资金流", "行业板块"),
@@ -160,12 +223,231 @@ def fetch_sector_fund_flow(config: dict) -> dict:
     for key, sector_type, label in targets:
         try:
             df = ak.stock_sector_fund_flow_rank(indicator=indicator, sector_type=sector_type)
-            result[key] = normalize_sector_rows(df, label, limit)
+            rows = normalize_sector_rows(df, label)
+            result[f"{key}_all"] = rows
+            result[key] = select_extreme_sector_rows(rows, limit)
             print(f"[完成] 获取 {label} 资金流 {len(result[key])} 条")
         except Exception as exc:
             print(f"[警告] {label}资金流抓取失败: {exc}")
 
     return result
+
+
+def match_watchlist_sectors(config: dict, sector_data: dict) -> list[dict]:
+    """把配置的重点赛道和板块资金流做模糊匹配。"""
+    all_rows = (
+        sector_data.get("industry_all")
+        or sector_data.get("industry", [])
+    ) + (
+        sector_data.get("concept_all")
+        or sector_data.get("concept", [])
+    )
+
+    report = []
+    for item in config.get("sector_watchlist", []):
+        aliases = [item.get("name", ""), *item.get("aliases", [])]
+        matches = []
+        for row in all_rows:
+            row_name = row.get("name", "")
+            if any(alias and (alias.lower() in row_name.lower() or row_name.lower() in alias.lower()) for alias in aliases):
+                matches.append(row)
+        matches.sort(key=lambda x: abs(x.get("main_net_raw") or 0), reverse=True)
+        report.append(
+            {
+                "name": item.get("name", ""),
+                "aliases": item.get("aliases", []),
+                "leaders": item.get("leaders", []),
+                "matches": matches[:5],
+                "leader_quotes": [],
+            }
+        )
+
+    return report
+
+
+def normalize_stock_spot_row(row) -> dict:
+    name = first_existing(row, ["名称", "股票简称"], "")
+    code = first_existing(row, ["代码", "股票代码"], "")
+    price = first_existing(row, ["最新价", "最新", "现价"], "")
+    change = first_existing(row, ["涨跌幅", "涨幅"], "")
+    amount = first_existing(row, ["成交额"], "")
+    market_value = first_existing(row, ["总市值", "流通市值"], "")
+    turnover = first_existing(row, ["换手率"], "")
+
+    return {
+        "name": str(name),
+        "code": str(code),
+        "price": str(price) if price not in (None, "") else "未知",
+        "change": format_percent(change),
+        "change_raw": parse_number(change),
+        "amount": format_money(amount),
+        "market_value": format_money(market_value),
+        "turnover": format_percent(turnover),
+    }
+
+
+def fetch_leader_stock_quotes(config: dict) -> dict:
+    """抓取重点赛道龙头股的 A 股实时快照。"""
+    if not config.get("leader_stock_snapshot", {}).get("enabled", True):
+        return {}
+
+    names = []
+    for item in config.get("sector_watchlist", []):
+        names.extend(item.get("leaders", []))
+    names = sorted(set(names))
+    if not names:
+        return {}
+
+    try:
+        import akshare as ak
+    except Exception as exc:
+        print(f"[警告] akshare 不可用，跳过龙头股行情抓取: {exc}")
+        return {}
+
+    try:
+        df = ak.stock_zh_a_spot_em()
+    except Exception as exc:
+        print(f"[警告] 龙头股行情抓取失败: {exc}")
+        return {}
+
+    quotes = {}
+    for _, row in df.iterrows():
+        quote = normalize_stock_spot_row(row)
+        if quote["name"] in names:
+            quotes[quote["name"]] = quote
+
+    print(f"[完成] 获取重点龙头股行情 {len(quotes)}/{len(names)} 条")
+    return quotes
+
+
+def attach_leader_quotes(watchlist_report: list[dict], leader_quotes: dict) -> list[dict]:
+    for item in watchlist_report:
+        item["leader_quotes"] = [
+            leader_quotes.get(name)
+            or {
+                "name": name,
+                "code": "",
+                "price": "未匹配",
+                "change": "未知",
+                "amount": "未知",
+                "market_value": "未知",
+                "turnover": "未知",
+            }
+            for name in item.get("leaders", [])
+        ]
+    return watchlist_report
+
+
+def render_watchlist_report(watchlist_report: list[dict]) -> str:
+    if not watchlist_report:
+        return "## 重点赛道跟踪\n- 暂无配置"
+
+    sections = ["## 重点赛道跟踪（必须逐项覆盖）"]
+    for item in watchlist_report:
+        lines = [f"### {item['name']}"]
+        if item.get("matches"):
+            for match in item["matches"]:
+                lines.append(
+                    f"- 资金匹配: {match['source']} / {match['name']} | 涨跌幅: {match['change']} | 主力净流入: {match['main_net']} | 超大单净流入: {match['super_net']}"
+                )
+        else:
+            lines.append("- 资金匹配: 未匹配到同名板块资金流，仍需结合龙头股表现和新闻判断。")
+
+        if item.get("leader_quotes"):
+            leader_lines = []
+            for quote in item["leader_quotes"]:
+                leader_lines.append(
+                    f"{quote['name']}({quote.get('code', '')}) 最新价:{quote['price']} 涨跌幅:{quote['change']} 成交额:{quote['amount']} 换手率:{quote['turnover']}"
+                )
+            lines.append("- 龙头股: " + "；".join(leader_lines))
+
+        lines.append("- 输出要求: 写清利好、利空、短线观察信号，不允许省略该赛道。")
+        sections.append("\n".join(lines))
+
+    return "\n\n".join(sections)
+
+
+def flow_value(row: dict) -> float:
+    value = row.get("main_net_raw")
+    return value if value is not None else 0.0
+
+
+def chart_rows(sector_data: dict, limit: int) -> Tuple[list[dict], list[dict]]:
+    all_rows = (sector_data.get("industry_all") or []) + (sector_data.get("concept_all") or [])
+    valid = [row for row in all_rows if row.get("main_net_raw") is not None]
+    positives = [row for row in valid if flow_value(row) >= 0]
+    negatives = [row for row in valid if flow_value(row) < 0]
+    positives.sort(key=flow_value, reverse=True)
+    negatives.sort(key=flow_value)
+    return positives[:limit], negatives[:limit]
+
+
+def generate_sector_flow_svg(config: dict, sector_data: dict, today: str) -> Path:
+    """生成类似手机截图的板块资金流向图。"""
+    digests_dir = PROJECT_ROOT / config["output"]["digests_dir"]
+    digests_dir.mkdir(exist_ok=True)
+    output_path = digests_dir / "sector-flow.svg"
+
+    limit = int(config.get("sector_fund_flow", {}).get("chart_limit", 18))
+    positives, negatives = chart_rows(sector_data, limit)
+    watched = {item.get("name", "") for item in config.get("sector_watchlist", [])}
+    watched_aliases = {
+        alias
+        for item in config.get("sector_watchlist", [])
+        for alias in [item.get("name", ""), *item.get("aliases", [])]
+        if alias
+    }
+
+    width = 980
+    row_h = 46
+    header_h = 150
+    height = header_h + row_h * max(len(positives), len(negatives), 8) + 82
+    max_abs = max([abs(flow_value(row)) for row in positives + negatives] or [1])
+
+    def row_svg(row: dict, index: int, x: int, y: int, positive: bool) -> str:
+        value = flow_value(row)
+        bar_w = int(170 * min(1, abs(value) / max_abs))
+        color = "#d94343" if positive else "#15845b"
+        pale = "#f7dada" if positive else "#d7efe4"
+        name = html.escape(row["name"][:9])
+        source = html.escape(row["source"].replace("资金流", ""))
+        money = html.escape(row["main_net"])
+        change = html.escape(row["change"])
+        is_watched = any(alias.lower() in row["name"].lower() or row["name"].lower() in alias.lower() for alias in watched_aliases)
+        bg = "#fff3f1" if positive else "#effaf4"
+        stroke = color if is_watched or row["name"] in watched else "#eadfd0"
+        rank_color = color if is_watched else "#8b8580"
+        return f"""
+        <g transform="translate({x},{y})">
+          <rect x="0" y="0" width="430" height="38" rx="8" fill="{bg}" stroke="{stroke}" stroke-width="{2 if is_watched else 1}"/>
+          <text x="18" y="25" font-size="18" font-weight="700" fill="{rank_color}">{index}</text>
+          <text x="58" y="25" font-size="20" font-weight="800" fill="#222">{name}</text>
+          <text x="165" y="25" font-size="13" fill="#7c756d">{source}</text>
+          <rect x="230" y="13" width="170" height="12" rx="6" fill="{pale}"/>
+          <rect x="{230 if positive else 400 - bar_w}" y="13" width="{bar_w}" height="12" rx="6" fill="{color}"/>
+          <text x="412" y="25" text-anchor="end" font-size="18" font-weight="800" fill="{color}">{money}</text>
+          <text x="58" y="52" font-size="13" fill="#8b8580">涨跌幅 {change}</text>
+        </g>
+        """
+
+    left_rows = "\n".join(row_svg(row, i + 1, 45, header_h + i * row_h, True) for i, row in enumerate(positives))
+    right_rows = "\n".join(row_svg(row, i + 1, 505, header_h + i * row_h, False) for i, row in enumerate(negatives))
+
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">
+  <rect width="100%" height="100%" fill="#fffaf4"/>
+  <rect x="24" y="24" width="{width - 48}" height="{height - 48}" rx="18" fill="#fffdf9" stroke="#eadfd0"/>
+  <text x="{width / 2}" y="70" text-anchor="middle" font-size="34" font-weight="900" fill="#161616">{html.escape(today)} 收盘 板块资金流向</text>
+  <text x="{width / 2}" y="104" text-anchor="middle" font-size="17" fill="#756d64">红色为主力净流入，绿色为主力净流出；描边为重点赛道匹配</text>
+  <text x="45" y="136" font-size="20" font-weight="900" fill="#b62222">资金净流入靠前</text>
+  <text x="505" y="136" font-size="20" font-weight="900" fill="#0b6b47">资金净流出靠前</text>
+  {left_rows}
+  {right_rows}
+  <text x="{width / 2}" y="{height - 34}" text-anchor="middle" font-size="14" fill="#91877d">数据来自 AkShare/东方财富板块资金流接口，仅作复盘参考，不构成投资建议。</text>
+</svg>
+"""
+    output_path.write_text(svg, encoding="utf-8")
+    print(f"[完成] 已生成板块资金流向图: {output_path}")
+    return output_path
 
 
 def render_sector_fund_flow(sector_data: dict) -> str:
@@ -206,12 +488,15 @@ def build_fallback_content(config: dict) -> str:
     )
 
 
-def prepare_content_for_ai(rss: list, sector_data: dict = None) -> str:
+def prepare_content_for_ai(rss: list, sector_data: dict = None, watchlist_report: list[dict] = None) -> str:
     """准备发送给 AI 的内容"""
     sections = []
 
     if sector_data:
         sections.append(render_sector_fund_flow(sector_data))
+
+    if watchlist_report:
+        sections.append(render_watchlist_report(watchlist_report))
 
     # RSS 部分 - 按分类分组
     if rss:
@@ -278,6 +563,17 @@ def build_digest_prompt(content: str, today: str) -> str:
 - 分为 **资金净流入靠前** 和 **资金净流出靠前** 两组
 - 每组至少列出5个板块，必须包含: 板块名称 + 主力净流入/净流出 + 涨跌幅 + 一句话解读
 - 如果出现 AI、算力、CPO、PCB、半导体、机器人、新能源、银行、证券、白酒、黄金、军工、医药、有色金属等板块，优先解释
+
+**🎯 重点赛道雷达（必须逐项覆盖，不允许省略）**
+- 必须覆盖原始内容中“重点赛道跟踪”列出的每一个赛道，尤其是: 存储芯片、CPO、PCB、先进封装、光纤光缆、MLCC、大科技、海外基建/出海链
+- 每个赛道必须按以下格式写:
+  - **赛道**:
+  - **资金状态**: 匹配到的板块名称、主力净流入/净流出、涨跌幅；如果未匹配，直接写“未匹配到板块资金流数据”
+  - **龙头股表现**: 列出配置里的龙头股，写涨跌幅、成交额或“未匹配”
+  - **今日利好**: 从新闻、政策、产业趋势、订单、价格、海外映射中提炼1-2条；如果原始新闻没有直接证据，要标注“待验证”
+  - **今日利空/风险**: 资金流出、涨幅过大、业绩兑现、海外政策、供应链、估值、监管等
+  - **明日盯盘信号**: 1-2个可观察指标，例如板块资金是否回流、龙头是否放量、海外映射是否延续
+- 这部分可以使用资金流和龙头股快照作为数据来源；不要为了满足链接要求硬编链接
 
 **💰 宏观与政策（3条）**
 - 央行政策、财政政策、金融监管
@@ -493,29 +789,36 @@ def main():
     print(f"\n日期: {today}")
 
     # 抓取数据
-    print("\n[1/4] 正在抓取财经媒体 RSS 源...")
+    print("\n[1/5] 正在抓取财经媒体 RSS 源...")
     rss = fetch_rss_feeds(config)
     print(f"      获取 {len(rss)} 条")
 
-    print("\n[2/4] 正在抓取 A 股板块资金流...")
+    print("\n[2/5] 正在抓取 A 股板块资金流...")
     sector_data = fetch_sector_fund_flow(config)
     sector_count = len(sector_data.get("industry", [])) + len(sector_data.get("concept", []))
     print(f"      获取 {sector_count} 条板块资金流")
 
+    print("\n[3/5] 正在匹配重点赛道和龙头股...")
+    watchlist_report = match_watchlist_sectors(config, sector_data)
+    leader_quotes = fetch_leader_stock_quotes(config)
+    watchlist_report = attach_leader_quotes(watchlist_report, leader_quotes)
+    generate_sector_flow_svg(config, sector_data, today)
+    print(f"      跟踪 {len(watchlist_report)} 个重点赛道")
+
     # 检查是否有内容
     if not rss and not sector_count:
         print("\n[警告] 未获取到任何 RSS 和板块资金流内容，将使用兜底内容生成简报，确保网站更新链路可验证。")
-        raw_content = build_fallback_content(config)
+        raw_content = build_fallback_content(config) + "\n\n" + render_watchlist_report(watchlist_report)
     else:
-        raw_content = prepare_content_for_ai(rss, sector_data)
+        raw_content = prepare_content_for_ai(rss, sector_data, watchlist_report)
 
 
     # 生成简报
-    print("[3/4] 正在使用 AI 生成财经简报...")
+    print("[4/5] 正在使用 AI 生成财经简报...")
     digest = generate_digest(raw_content, config, today)
 
     # 保存
-    print("[4/4] 正在保存简报...")
+    print("[5/5] 正在保存简报...")
     save_digest(digest, config, today)
 
     print("\n" + "=" * 50)

@@ -193,6 +193,22 @@
             font-size: 13px;
         }
 
+        .chart-panel {
+            margin: 0 0 24px;
+            padding: 16px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface);
+            box-shadow: var(--shadow);
+        }
+
+        .chart-panel img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 6px;
+        }
+
         .article {
             padding: 28px 34px;
         }
@@ -321,7 +337,8 @@
             }
 
             .article,
-            .hero-main {
+            .hero-main,
+            .chart-panel {
                 padding: 22px;
             }
 
@@ -363,6 +380,7 @@
             </aside>
         </section>
 
+        <div class="section-nav"><span>🔥 今日热点（5条）</span><span>📈 市场动态</span><span>🧭 今日板块资金流向</span><span>💰 宏观与政策</span><span>🏢 行业观察</span><span>🔎 板块利好利空归因</span><span>🌍 国际视野</span><span>💡 投资洞察</span></div>
         <div class="section-nav"><span>🔥 今日热点（5条）</span><span>📈 市场动态</span><span>🧭 今日板块资金流向</span><span>💰 宏观与政策</span><span>🏢 行业观察</span><span>🔎 板块利好利空归因</span><span>🌍 国际视野</span><span>💡 投资洞察</span></div>
 
         <article class="article">
@@ -812,7 +830,7 @@
         </section>
 
         <footer>
-            由 Claude/GLM + GitHub Actions 自动生成。内容仅供参考，不构成投资建议。
+            由 OpenAI + GitHub Actions 自动生成。内容仅供参考，不构成投资建议。
         </footer>
     </div>
 </body>
